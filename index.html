@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyber Defense – Protect the Server</title>
+  <style>
+    /* Xóa khoảng trắng mặc định của trình duyệt */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Nền trang web màu navy đậm, căn canvas vào giữa */
+    body {
+      background: #060E1A;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Canvas là "màn hình" game — không thêm style phức tạp */
+    #gameCanvas {
+      display: block;
+      border: 1px solid #0099CC;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Đây là "màn hình" game, mọi thứ sẽ được vẽ lên đây bằng JavaScript -->
+  <canvas id="gameCanvas" width="900" height="500"></canvas>
+
+  <!-- Load file game.js SAU canvas để JS đọc được canvas -->
+  <script src="js/game.js"></script>
+
+</body>
+</html>
