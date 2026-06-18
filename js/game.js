@@ -73,6 +73,13 @@ const game = {
   totalWaves: 3,
 };
 
+// -----------------------------------------------------------
+// 4b. DANH SÁCH QUÁI VÀ BIẾN SPAWN
+// -----------------------------------------------------------
+let enemies = [];            // danh sách quái hiện tại
+let spawnTimer = 0;          // bộ đếm thời gian spawn
+const SPAWN_INTERVAL = 1.5;  // cứ 1.5 giây spawn 1 quái
+
 
 // -----------------------------------------------------------
 // 5. CÁC HÀM VẼ
@@ -251,7 +258,7 @@ function drawHPBar(x, y, w, h, current, max) {
 
 // -----------------------------------------------------------
 // 6. HÀM VẼ TOÀN BỘ MỘT FRAME
-//    Gọi theo thứ tự: nền → lưới → đường → slot → server → HUD
+//    Gọi theo thứ tự: nền → lưới → đường → slot → server → enemies → HUD
 // -----------------------------------------------------------
 function draw() {
   // Xóa màn hình (vẽ lại nền mỗi frame)
@@ -262,16 +269,72 @@ function draw() {
   drawRoad();    // đường quái chạy
   drawSlots();   // 4 ô đặt tower
   drawServer();  // biểu tượng server
+  
+  // Vẽ tất cả enemies
+  enemies.forEach(enemy => {
+    enemy.draw(ctx);
+  });
+  
   drawHUD();     // thanh thông tin phía trên
 }
 
 
 // -----------------------------------------------------------
-// 7. GAME LOOP — trái tim của game
+// 7. HÀM UPDATE — cập nhật logic game
+//    - Spawn enemies
+//    - Di chuyển enemies
+//    - Kiểm tra enemies vượt quá khoảng cách
+// -----------------------------------------------------------
+let lastTime = Date.now();
+
+function update() {
+  const now = Date.now();
+  const deltaTime = (now - lastTime) / 1000;  // chuyển ms thành giây
+  lastTime = now;
+
+  // --- Spawn enemies ---
+  spawnTimer += deltaTime;
+  if (spawnTimer >= SPAWN_INTERVAL) {
+    spawnEnemy();
+    spawnTimer = 0;
+  }
+
+  // --- Update enemies (di chuyển, remove if out of bounds) ---
+  enemies = enemies.filter(enemy => {
+    enemy.move(deltaTime);
+    return enemy.x < W;  // giữ lại quái chưa ra khỏi màn hình
+  });
+}
+
+// -----------------------------------------------------------
+// 7b. HÀM SPAWN QUÁI
+//     Random loại quái: malware | phishing | ddos
+// -----------------------------------------------------------
+function spawnEnemy() {
+  const types = ['malware', 'phishing', 'ddos'];
+  const typeConfigs = {
+    malware:  { hp: 80,  speed: 60,  damage: 10 },
+    phishing: { hp: 60,  speed: 80,  damage: 5  },
+    ddos:     { hp: 100, speed: 40,  damage: 15 },
+  };
+
+  const type = types[Math.floor(Math.random() * types.length)];
+  const config = typeConfigs[type];
+
+  const enemy = new Enemy(type, config.hp, config.speed, config.damage);
+  enemies.push(enemy);
+
+  console.log(`✓ Spawned ${type} enemy at x=${enemy.x}`);
+}
+
+
+// -----------------------------------------------------------
+// 8. GAME LOOP — trái tim của game
 //    requestAnimationFrame gọi hàm gameLoop ~60 lần/giây
-//    Sau này thêm: update() để di chuyển quái, bắn đạn...
+//    Thứ tự: update logic → draw frame → lên lịch frame tiếp theo
 // -----------------------------------------------------------
 function gameLoop() {
+  update();                        // cập nhật logic game
   draw();                          // vẽ frame hiện tại
   requestAnimationFrame(gameLoop); // lên lịch vẽ frame tiếp theo
 }
