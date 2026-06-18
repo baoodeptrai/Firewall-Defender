@@ -102,8 +102,23 @@ const TOWERS = [
   },
 ];
 
+<<<<<<< HEAD
 // Trạng thái từng slot — null = chưa đặt tower
 const slotState = [null, null, null, null];
+=======
+// -----------------------------------------------------------
+// 4b. DANH SÁCH QUÁI, ĐẠN, TOWER VÀ BIẾN SPAWN
+// -----------------------------------------------------------
+let enemies = [];            // danh sách quái hiện tại
+let projectiles = [];        // danh sách đạn phát ra
+let towers = [];             // danh sách towers
+let spawnTimer = 0;          // bộ đếm thời gian spawn
+const SPAWN_INTERVAL = 1.5;  // cứ 1.5 giây spawn 1 quái
+const PROJECTILE_SPEED = 300; // px/giây
+const TOWER_DAMAGE = 20;      // damage mỗi phát bắn
+const TOWER_FIRE_RATE = 0.8;  // giây giữa các phát bắn
+
+>>>>>>> 93ffd754583c2786be51086e5e4997e69d9070b1
 
 // Slot nào đang được chọn (hiện menu mua) — -1 = không có
 let selectedSlot = -1;
@@ -441,8 +456,182 @@ function drawHPBar(x, y, w, h, current, max) {
 
 
 // -----------------------------------------------------------
+// 5.5 CLASS PROJECTILE — đạn bắn từ tower
+//  Simple: di chuyển về phía phải, vẽ dưới dạng hình vuông nhỏ
+// -----------------------------------------------------------
+class Projectile {
+  constructor(x, y, speed = PROJECTILE_SPEED) {
+    this.x      = x;
+    this.y      = y;
+    this.speed  = speed;
+    this.radius = 5;    // bán kính hình tròn đạn
+    this.damage = TOWER_DAMAGE;
+    this.alive  = true;
+  }
+
+  move(deltaTime) {
+    this.x += this.speed * deltaTime;
+  }
+
+  draw(ctx) {
+    if (!this.alive) return;
+
+    // Vẽ đạn dưới dạng hình tròn xanh nhỏ với glow
+    ctx.save();
+    ctx.shadowColor = COLORS.CYAN;
+    ctx.shadowBlur  = 8;
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.CYAN;
+    ctx.fill();
+
+    ctx.strokeStyle = '#00FF88';
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+
+// -----------------------------------------------------------
+// 5.5b CLASS TOWER — tháp phòng thủ
+// -----------------------------------------------------------
+class Tower {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.range = 250;         // phạm vi bắn
+    this.fireRate = TOWER_FIRE_RATE;
+    this.shootTimer = 0;      // bộ đếm bắn
+    this.isActive = false;    // có được đặt không
+  }
+
+  // Tìm enemy gần nhất trong phạm vi
+  getTargetEnemy(enemies) {
+    let closest = null;
+    let closestDist = this.range + 1;
+
+    enemies.forEach(enemy => {
+      if (!enemy.alive) return;
+
+      const dx = enemy.x - this.x;
+      const dy = enemy.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = enemy;
+      }
+    });
+
+    return closest;
+  }
+
+  update(deltaTime, enemies) {
+    if (!this.isActive) return;
+
+    this.shootTimer -= deltaTime;
+
+    if (this.shootTimer <= 0) {
+      const target = this.getTargetEnemy(enemies);
+      if (target) {
+        spawnProjectile(this.x, this.y);
+        this.shootTimer = this.fireRate;
+      }
+    }
+  }
+
+  draw(ctx) {
+    if (!this.isActive) return;
+
+    // Vẽ tower dưới dạng hình vuông nhỏ
+    const size = 20;
+    const sx = this.x - size / 2;
+    const sy = this.y - size / 2;
+
+    // Nền tower
+    ctx.fillStyle = '#0099CC';
+    ctx.fillRect(sx, sy, size, size);
+
+    // Viền
+    ctx.strokeStyle = '#00FF88';
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(sx, sy, size, size);
+
+    // Phạm vi (tùy chọn)
+    ctx.strokeStyle = 'rgba(0, 255, 136, 0.1)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+
+
+// -----------------------------------------------------------
+// 5.6 HÀM SPAWN ĐẠN
+//  Tower tại vị trí slot bắn về phía quái
+// -----------------------------------------------------------
+function spawnProjectile(towerX, towerY) {
+  const projectile = new Projectile(towerX, towerY);
+  projectiles.push(projectile);
+}
+
+
+// -----------------------------------------------------------
+// 5.7 COLLISION DETECTION — Đạn trúng Enemy
+//  Khoảng cách giữa đạn và enemy < (radius đạn + radius enemy)
+// -----------------------------------------------------------
+function checkCollisions() {
+  // Lặp qua từng đạn
+  for (let p = projectiles.length - 1; p >= 0; p--) {
+    const projectile = projectiles[p];
+
+    // Lặp qua từng enemy
+    for (let e = enemies.length - 1; e >= 0; e--) {
+      const enemy = enemies[e];
+
+      if (!enemy.alive) continue;
+
+      // Tính khoảng cách
+      const dx = projectile.x - enemy.x;
+      const dy = projectile.y - enemy.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Nếu trúng
+      if (dist < projectile.radius + enemy.radius) {
+        projectile.alive = false;
+
+        // Enemy nhận damage
+        const isDead = enemy.takeDamage(projectile.damage);
+
+        if (isDead) {
+          // Enemy chết → cộng gold
+          game.gold += 50;
+          console.log(`✓ Enemy ${enemy.type} defeated! +50 gold (total: ${game.gold})`);
+        } else {
+          console.log(`✓ Hit ${enemy.type}! HP: ${enemy.hp}/${enemy.maxHp}`);
+        }
+
+        break;  // một đạn chỉ trúng 1 enemy
+      }
+    }
+  }
+
+  // Xóa đạn chết khỏi array
+  projectiles = projectiles.filter(p => p.alive && p.x < W);
+  
+  // Xóa enemy chết khỏi array
+  enemies = enemies.filter(e => e.alive);
+}
+
+
+// -----------------------------------------------------------
 // 6. HÀM VẼ TOÀN BỘ MỘT FRAME
-//    Gọi theo thứ tự: nền → lưới → đường → slot → server → HUD
+//    Gọi theo thứ tự: nền → lưới → đường → slot → tower → server → projectiles → enemies → HUD
 // -----------------------------------------------------------
 function draw() {
   // Xóa màn hình (vẽ lại nền mỗi frame)
@@ -452,20 +641,128 @@ function draw() {
   drawGrid();    // lưới nền
   drawRoad();    // đường quái chạy
   drawSlots();   // 4 ô đặt tower
+  
+  // Vẽ tất cả towers
+  towers.forEach(tower => {
+    tower.draw(ctx);
+  });
+  
   drawServer();  // biểu tượng server
+  
+  // Vẽ tất cả projectiles
+  projectiles.forEach(projectile => {
+    projectile.draw(ctx);
+  });
+  
+  // Vẽ tất cả enemies
+  enemies.forEach(enemy => {
+    enemy.draw(ctx);
+  });
+  
   drawHUD();     // thanh thông tin phía trên
 }
 
 
 // -----------------------------------------------------------
-// 7. GAME LOOP — trái tim của game
+// 8. HÀM UPDATE — cập nhật logic game
+//    - Spawn enemies
+//    - Update towers
+//    - Di chuyển enemies
+//    - Di chuyển projectiles
+//    - Kiểm tra collisions
+//    - Cập nhật flash effect
+// -----------------------------------------------------------
+let lastTime = Date.now();
+
+function update() {
+  const now = Date.now();
+  const deltaTime = (now - lastTime) / 1000;  // chuyển ms thành giây
+  lastTime = now;
+
+  // --- Spawn enemies ---
+  spawnTimer += deltaTime;
+  if (spawnTimer >= SPAWN_INTERVAL) {
+    spawnEnemy();
+    spawnTimer = 0;
+  }
+
+  // --- Update towers (shooting logic) ---
+  updateTowers(deltaTime);
+
+  // --- Update enemies (di chuyển, flash effect) ---
+  enemies.forEach(enemy => {
+    enemy.move(deltaTime);
+    enemy.updateFlash(deltaTime);
+  });
+
+  // --- Update projectiles (di chuyển) ---
+  projectiles.forEach(projectile => {
+    projectile.move(deltaTime);
+  });
+
+  // --- Kiểm tra collisions ---
+  checkCollisions();
+}
+
+// -----------------------------------------------------------
+// 7b. HÀM SPAWN QUÁI
+//     Random loại quái: malware | phishing | ddos
+// -----------------------------------------------------------
+function spawnEnemy() {
+  const types = ['malware', 'phishing', 'ddos'];
+  const typeConfigs = {
+    malware:  { hp: 80,  speed: 60,  damage: 10 },
+    phishing: { hp: 60,  speed: 80,  damage: 5  },
+    ddos:     { hp: 100, speed: 40,  damage: 15 },
+  };
+
+  const type = types[Math.floor(Math.random() * types.length)];
+  const config = typeConfigs[type];
+
+  const enemy = new Enemy(type, config.hp, config.speed, config.damage);
+  enemies.push(enemy);
+
+  console.log(`✓ Spawned ${type} enemy at x=${enemy.x}`);
+}
+
+
+// -----------------------------------------------------------
+// 7c. HÀM INITIALIZE GAME
+//     Tạo towers từ MAP.slots
+// -----------------------------------------------------------
+function initGame() {
+  MAP.slots.forEach((slot, index) => {
+    const tower = new Tower(slot.x, MAP.roadY - 20);
+    tower.isActive = true;  // cố định đặt towers
+    towers.push(tower);
+  });
+
+  console.log(`✓ Game initialized. ${towers.length} towers placed.`);
+}
+
+
+// -----------------------------------------------------------
+// 7d. HÀM UPDATE TOWERS
+//     Cập nhật fire rate và shooting logic
+// -----------------------------------------------------------
+function updateTowers(deltaTime) {
+  towers.forEach(tower => {
+    tower.update(deltaTime, enemies);
+  });
+}
+
+
+// -----------------------------------------------------------
+// 9. GAME LOOP — trái tim của game
 //    requestAnimationFrame gọi hàm gameLoop ~60 lần/giây
-//    Sau này thêm: update() để di chuyển quái, bắn đạn...
+//    Thứ tự: update logic → draw frame → lên lịch frame tiếp theo
 // -----------------------------------------------------------
 function gameLoop() {
+  update();                        // cập nhật logic game
   draw();                          // vẽ frame hiện tại
   requestAnimationFrame(gameLoop); // lên lịch vẽ frame tiếp theo
 }
 
-// Khởi động game loop
+// Khởi động game
+initGame();
 gameLoop();
