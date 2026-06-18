@@ -66,7 +66,7 @@ const MAP = {
 // 4. TRẠNG THÁI GAME (sẽ mở rộng dần ở các ngày sau)
 // -----------------------------------------------------------
 const game = {
-  gold:       300,    // tiền ban đầu
+  gold:       500,    // tiền ban đầu
   serverHP:   100,    // máu server
   serverMaxHP:100,
   wave:       1,      // wave hiện tại
@@ -102,10 +102,8 @@ const TOWERS = [
   },
 ];
 
-<<<<<<< HEAD
 // Trạng thái từng slot — null = chưa đặt tower
 const slotState = [null, null, null, null];
-=======
 // -----------------------------------------------------------
 // 4b. DANH SÁCH QUÁI, ĐẠN, TOWER VÀ BIẾN SPAWN
 // -----------------------------------------------------------
@@ -118,7 +116,6 @@ const PROJECTILE_SPEED = 300; // px/giây
 const TOWER_DAMAGE = 20;      // damage mỗi phát bắn
 const TOWER_FIRE_RATE = 0.8;  // giây giữa các phát bắn
 
->>>>>>> 93ffd754583c2786be51086e5e4997e69d9070b1
 
 // Slot nào đang được chọn (hiện menu mua) — -1 = không có
 let selectedSlot = -1;
@@ -388,12 +385,19 @@ canvas.addEventListener('click', function(e) {
 // -----------------------------------------------------------
 // MUA TOWER
 // -----------------------------------------------------------
-function buyTower(slotIndex, tower) {
-  if (game.gold < tower.price) return;   // không đủ tiền
+function buyTower(slotIndex, towerConfig) {
+  if (game.gold < towerConfig.price) return;
 
-  game.gold         -= tower.price;      // trừ tiền
-  slotState[slotIndex] = tower;          // đặt tower vào slot
-  selectedSlot         = -1;            // đóng menu
+  game.gold -= towerConfig.price;
+  slotState[slotIndex] = towerConfig;  // để drawSlots() vẽ đúng
+
+  // Tạo Tower object cho logic bắn đạn của B
+  const slot = MAP.slots[slotIndex];
+  const towerObj = new Tower(slot.x, MAP.roadY - 20);
+  towerObj.isActive = true;
+  towers[slotIndex] = towerObj;        // lưu đúng vị trí slot
+
+  selectedSlot = -1;
 }
 
 
@@ -641,12 +645,6 @@ function draw() {
   drawGrid();    // lưới nền
   drawRoad();    // đường quái chạy
   drawSlots();   // 4 ô đặt tower
-  
-  // Vẽ tất cả towers
-  towers.forEach(tower => {
-    tower.draw(ctx);
-  });
-  
   drawServer();  // biểu tượng server
   
   // Vẽ tất cả projectiles
@@ -725,24 +723,8 @@ function spawnEnemy() {
   console.log(`✓ Spawned ${type} enemy at x=${enemy.x}`);
 }
 
-
 // -----------------------------------------------------------
-// 7c. HÀM INITIALIZE GAME
-//     Tạo towers từ MAP.slots
-// -----------------------------------------------------------
-function initGame() {
-  MAP.slots.forEach((slot, index) => {
-    const tower = new Tower(slot.x, MAP.roadY - 20);
-    tower.isActive = true;  // cố định đặt towers
-    towers.push(tower);
-  });
-
-  console.log(`✓ Game initialized. ${towers.length} towers placed.`);
-}
-
-
-// -----------------------------------------------------------
-// 7d. HÀM UPDATE TOWERS
+// 7c. HÀM UPDATE TOWERS
 //     Cập nhật fire rate và shooting logic
 // -----------------------------------------------------------
 function updateTowers(deltaTime) {
@@ -764,5 +746,4 @@ function gameLoop() {
 }
 
 // Khởi động game
-initGame();
 gameLoop();
