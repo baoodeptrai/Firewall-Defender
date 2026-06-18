@@ -47,6 +47,10 @@ class Enemy {
 
     // Trạng thái: còn sống không?
     this.alive  = true;
+
+    // Flash effect khi trúng đạn: flashDuration > 0 = đang flash
+    this.flashDuration = 0;
+    this.flashColor    = '#FFFFFF';
   }
 
 
@@ -81,9 +85,16 @@ class Enemy {
     ctx.shadowBlur  = 14;
 
     // --- 2. Hình tròn chính ---
+    // Nếu đang flash, dùng màu flash; nếu không dùng màu gốc
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = color;
+    
+    if (this.flashDuration > 0) {
+      // Flash trắng
+      ctx.fillStyle = 'rgba(255, 255, 255, ' + (this.flashDuration / 0.15) + ')';
+    } else {
+      ctx.fillStyle = color;
+    }
     ctx.fill();
 
     // --- 3. Viền tròn trắng nhạt để nổi bật trên nền tối ---
@@ -143,12 +154,33 @@ class Enemy {
   // ---------------------------------------------------------
   takeDamage(amount) {
     this.hp -= amount;
+    this.triggerFlash();  // flash trắng khi trúng đạn
+    
     if (this.hp <= 0) {
       this.hp    = 0;
       this.alive = false;
       return true;   // quái đã chết
     }
     return false;
+  }
+
+  // ---------------------------------------------------------
+  // triggerFlash()
+  //  Kích hoạt hiệu ứng flash trắng. Chạy 150ms (0.15s)
+  // ---------------------------------------------------------
+  triggerFlash() {
+    this.flashDuration = 0.15;
+  }
+
+  // ---------------------------------------------------------
+  // updateFlash(deltaTime)
+  //  Cập nhật flash effect mỗi frame (giảm flashDuration)
+  // ---------------------------------------------------------
+  updateFlash(deltaTime) {
+    if (this.flashDuration > 0) {
+      this.flashDuration -= deltaTime;
+      if (this.flashDuration < 0) this.flashDuration = 0;
+    }
   }
 }
 
