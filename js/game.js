@@ -110,11 +110,14 @@ const slotState = [null, null, null, null];
 let enemies = [];            // danh sách quái hiện tại
 let projectiles = [];        // danh sách đạn phát ra
 let towers = [];             // danh sách towers
+let goldPopups = [];         // hiệu ứng +gold
 let spawnTimer = 0;          // bộ đếm thời gian spawn
 const SPAWN_INTERVAL = 1.5;  // cứ 1.5 giây spawn 1 quái
 const PROJECTILE_SPEED = 300; // px/giây
 const TOWER_DAMAGE = 20;      // damage mỗi phát bắn
 const TOWER_FIRE_RATE = 0.8;  // giây giữa các phát bắn
+const GOLD_POPUP_DURATION = 0.9; // giây
+const GOLD_POPUP_RISE = 24;      // pixel di chuyển lên trên
 
 
 // Slot nào đang được chọn (hiện menu mua) — -1 = không có
@@ -416,10 +419,14 @@ function drawHUD() {
   ctx.stroke();
 
   // --- Gold ---
+  ctx.save();
+  ctx.shadowColor = COLORS.GOLD;
+  ctx.shadowBlur = 8;
   ctx.fillStyle  = COLORS.GOLD;
-  ctx.font       = "bold 13px 'Courier New'";
+  ctx.font       = "bold 16px 'Courier New'";
   ctx.textAlign  = 'left';
   ctx.fillText(`GOLD: ${game.gold}`, 14, 23);
+  ctx.restore();
 
   // --- Wave counter ---
   ctx.fillStyle  = COLORS.CYAN;
@@ -464,17 +471,25 @@ function drawHPBar(x, y, w, h, current, max) {
 //  Simple: di chuyển về phía phải, vẽ dưới dạng hình vuông nhỏ
 // -----------------------------------------------------------
 class Projectile {
-  constructor(x, y, speed = PROJECTILE_SPEED) {
+  constructor(x, y, targetX, targetY, speed = PROJECTILE_SPEED) {
     this.x      = x;
     this.y      = y;
     this.speed  = speed;
     this.radius = 5;    // bán kính hình tròn đạn
     this.damage = TOWER_DAMAGE;
     this.alive  = true;
+
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+
+    this.vx = (dx / distance) * speed;
+    this.vy = (dy / distance) * speed;
   }
 
   move(deltaTime) {
-    this.x += this.speed * deltaTime;
+    this.x += this.vx * deltaTime;
+    this.y += this.vy * deltaTime;
   }
 
   draw(ctx) {
@@ -541,7 +556,7 @@ class Tower {
     if (this.shootTimer <= 0) {
       const target = this.getTargetEnemy(enemies);
       if (target) {
-        spawnProjectile(this.x, this.y);
+        spawnProjectile(this.x, this.y, target);
         this.shootTimer = this.fireRate;
       }
     }
@@ -579,8 +594,8 @@ class Tower {
 // 5.6 HÀM SPAWN ĐẠN
 //  Tower tại vị trí slot bắn về phía quái
 // -----------------------------------------------------------
-function spawnProjectile(towerX, towerY) {
-  const projectile = new Projectile(towerX, towerY);
+function spawnProjectile(towerX, towerY, targetEnemy) {
+  const projectile = new Projectile(towerX, towerY, targetEnemy.x, targetEnemy.y);
   projectiles.push(projectile);
 }
 
@@ -615,6 +630,7 @@ function checkCollisions() {
         if (isDead) {
           // Enemy chết → cộng gold
           game.gold += 50;
+          createGoldPopup(50, enemy.x, enemy.y - enemy.radius - 10);
           console.log(`✓ Enemy ${enemy.type} defeated! +50 gold (total: ${game.gold})`);
         } else {
           console.log(`✓ Hit ${enemy.type}! HP: ${enemy.hp}/${enemy.maxHp}`);
@@ -626,7 +642,7 @@ function checkCollisions() {
   }
 
   // Xóa đạn chết khỏi array
-  projectiles = projectiles.filter(p => p.alive && p.x < W);
+  projectiles = projectiles.filter(p => p.alive && p.x < W && p.y >= 0 && p.y <= H);
   
   // Xóa enemy chết khỏi array
   enemies = enemies.filter(e => e.alive);
@@ -658,6 +674,44 @@ function draw() {
   });
   
   drawHUD();     // thanh thông tin phía trên
+  drawGoldPopups(ctx); // hiệu ứng +gold
+}
+
+
+// -----------------------------------------------------------
+// 5.8 EFFECTS: GOLD POPUP
+// -----------------------------------------------------------
+function createGoldPopup(amount, x, y) {
+  goldPopups.push({
+    amount,
+    x,
+    y,
+    alpha: 1,
+    age: 0,
+  });
+}
+
+function updateGoldPopups(deltaTime) {
+  goldPopups.forEach(popup => {
+    popup.age += deltaTime;
+    popup.y -= (GOLD_POPUP_RISE / GOLD_POPUP_DURATION) * deltaTime;
+    popup.alpha = 1 - popup.age / GOLD_POPUP_DURATION;
+  });
+
+  goldPopups = goldPopups.filter(popup => popup.age < GOLD_POPUP_DURATION);
+}
+
+function drawGoldPopups(ctx) {
+  goldPopups.forEach(popup => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, popup.alpha);
+    ctx.fillStyle = COLORS.GOLD;
+    ctx.font = "bold 18px 'Courier New'";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`+${popup.amount}`, popup.x, popup.y);
+    ctx.restore();
+  });
 }
 
 
@@ -700,6 +754,9 @@ function update() {
 
   // --- Kiểm tra collisions ---
   checkCollisions();
+
+  // --- Update gold popup hiệu ứng ---
+  updateGoldPopups(deltaTime);
 }
 
 // -----------------------------------------------------------
