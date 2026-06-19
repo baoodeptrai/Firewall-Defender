@@ -804,3 +804,518 @@ function gameLoop() {
 
 // Khởi động game
 gameLoop();
+
+// ============================================================
+//  GAME STATES — quản lý trạng thái toàn cục
+//  MENU → PLAYING → WAVE_CLEAR → POPUP → GAME_OVER
+// ============================================================
+
+// -----------------------------------------------------------
+// STATE CONSTANTS
+// -----------------------------------------------------------
+const STATE = {
+  MENU:       'MENU',
+  PLAYING:    'PLAYING',
+  WAVE_CLEAR: 'WAVE_CLEAR',
+  POPUP:      'POPUP',
+  GAME_OVER:  'GAME_OVER',
+};
+
+let currentState = STATE.MENU;
+
+// Dữ liệu riêng cho từng state
+const stateData = {
+  // MENU
+  menuAnimTick: 0,
+
+  // WAVE_CLEAR — delay trước khi chuyển wave tiếp
+  waveClearTimer:    0,
+  waveClearDuration: 3.0,   // hiển thị 3 giây rồi tự chuyển
+
+  // POPUP — thông báo mini (mua tower xong, thiếu tiền…)
+  popupMessage:  '',
+  popupColor:    '#00D4FF',
+  popupTimer:    0,
+  popupDuration: 1.8,
+  popupPrevState: STATE.PLAYING,   // state nào sẽ quay lại sau popup
+
+  // GAME_OVER
+  gameOverWon: false,   // true = thắng, false = thua
+};
+
+
+// -----------------------------------------------------------
+// CHUYỂN STATE — dùng hàm này thay vì gán trực tiếp
+// -----------------------------------------------------------
+function setState(newState, options = {}) {
+  currentState = newState;
+
+  if (newState === STATE.PLAYING) {
+    // Mỗi khi bắt đầu / tiếp tục playing, reset spawn timer
+    spawnTimer = 0;
+  }
+
+  if (newState === STATE.WAVE_CLEAR) {
+    stateData.waveClearTimer = 0;
+    enemies = [];
+    projectiles = [];
+  }
+
+  if (newState === STATE.POPUP) {
+    stateData.popupMessage  = options.message  ?? 'THÔNG BÁO';
+    stateData.popupColor    = options.color     ?? '#00D4FF';
+    stateData.popupTimer    = 0;
+    stateData.popupDuration = options.duration  ?? 1.8;
+    stateData.popupPrevState = options.returnTo ?? STATE.PLAYING;
+  }
+
+  if (newState === STATE.GAME_OVER) {
+    stateData.gameOverWon = options.won ?? false;
+    enemies = [];
+    projectiles = [];
+  }
+}
+
+
+// -----------------------------------------------------------
+// VẼ MÀN HÌNH MENU
+// -----------------------------------------------------------
+function drawMenu() {
+  // Nền tối
+  ctx.fillStyle = COLORS.BG_DEEP;
+  ctx.fillRect(0, 0, W, H);
+
+  // Lưới nền mờ
+  drawGrid();
+
+  stateData.menuAnimTick += 0.02;
+  const pulse = 0.7 + 0.3 * Math.sin(stateData.menuAnimTick);
+
+  // --- Logo / Tiêu đề ---
+  ctx.save();
+  ctx.shadowColor = COLORS.CYAN;
+  ctx.shadowBlur  = 30 * pulse;
+  ctx.fillStyle   = COLORS.CYAN;
+  ctx.font        = "bold 48px 'Courier New'";
+  ctx.textAlign   = 'center';
+  ctx.fillText('FIREWALL', W / 2, H / 2 - 80);
+
+  ctx.fillStyle = '#00FF88';
+  ctx.shadowColor = '#00FF88';
+  ctx.font = "bold 28px 'Courier New'";
+  ctx.fillText('DEFENDER', W / 2, H / 2 - 38);
+  ctx.restore();
+
+  // Gạch ngang trang trí
+  ctx.strokeStyle = COLORS.CYAN_DARK;
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 180, H / 2 - 16);
+  ctx.lineTo(W / 2 + 180, H / 2 - 16);
+  ctx.stroke();
+
+  // Mô tả
+  ctx.fillStyle  = COLORS.TEXT;
+  ctx.font       = "14px 'Courier New'";
+  ctx.textAlign  = 'center';
+  ctx.fillText('Bảo vệ server khỏi các cuộc tấn công mạng', W / 2, H / 2 + 12);
+
+  // Nút PLAY (nhấp nháy)
+  const btnW = 220, btnH = 46;
+  const btnX = W / 2 - btnW / 2;
+  const btnY = H / 2 + 44;
+
+  ctx.fillStyle   = `rgba(0, 212, 255, ${0.12 + 0.08 * pulse})`;
+  ctx.fillRect(btnX, btnY, btnW, btnH);
+  ctx.strokeStyle = `rgba(0, 212, 255, ${pulse})`;
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(btnX, btnY, btnW, btnH);
+
+  ctx.fillStyle  = COLORS.CYAN;
+  ctx.font       = "bold 18px 'Courier New'";
+  ctx.textAlign  = 'center';
+  ctx.fillText('[ BẮT ĐẦU CHƠI ]', W / 2, btnY + 30);
+
+  // Hướng dẫn nhỏ
+  ctx.fillStyle = COLORS.TEXT_MUTED;
+  ctx.font      = "11px 'Courier New'";
+  ctx.fillText('Click slot để đặt tower · Bảo vệ SERVER', W / 2, H / 2 + 118);
+
+  // Lưu vùng nút để check click
+  drawMenu._btnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+}
+
+
+// -----------------------------------------------------------
+// VẼ MÀN HÌNH WAVE CLEAR
+// -----------------------------------------------------------
+function drawWaveClear() {
+  // Vẽ game bên dưới (mờ đi)
+  draw();
+
+  // Overlay mờ
+  ctx.fillStyle = 'rgba(10, 22, 40, 0.72)';
+  ctx.fillRect(0, 0, W, H);
+
+  const pct = stateData.waveClearTimer / stateData.waveClearDuration;
+  const isLastWave = game.wave > game.totalWaves;
+
+  // Box giữa màn
+  const bw = 360, bh = 160;
+  const bx = W / 2 - bw / 2;
+  const by = H / 2 - bh / 2;
+
+  ctx.fillStyle   = '#0D2137';
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = '#00FF88';
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(bx, by, bw, bh);
+
+  // Tiêu đề
+  ctx.save();
+  ctx.shadowColor = '#00FF88';
+  ctx.shadowBlur  = 20;
+  ctx.fillStyle   = '#00FF88';
+  ctx.font        = "bold 26px 'Courier New'";
+  ctx.textAlign   = 'center';
+  ctx.fillText(isLastWave ? '✓ ALL WAVES CLEAR!' : `✓ WAVE ${game.wave - 1} CLEAR!`, W / 2, by + 52);
+  ctx.restore();
+
+  ctx.fillStyle  = COLORS.TEXT;
+  ctx.font       = "14px 'Courier New'";
+  ctx.textAlign  = 'center';
+  ctx.fillText(
+    isLastWave
+      ? 'Bạn đã bảo vệ server thành công!'
+      : `Wave ${game.wave} / ${game.totalWaves} sắp bắt đầu…`,
+    W / 2, by + 84
+  );
+
+  // Thanh đếm ngược
+  const barW = bw - 60;
+  ctx.fillStyle = '#162845';
+  ctx.fillRect(bx + 30, by + 106, barW, 12);
+  ctx.fillStyle = '#00FF88';
+  ctx.fillRect(bx + 30, by + 106, barW * pct, 12);
+  ctx.strokeStyle = COLORS.CYAN_DARK;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx + 30, by + 106, barW, 12);
+
+  ctx.fillStyle  = COLORS.TEXT_MUTED;
+  ctx.font       = "10px 'Courier New'";
+  ctx.fillText(
+    isLastWave ? 'Màn hình kết thúc…' : 'Wave tiếp theo…',
+    W / 2, by + 134
+  );
+}
+
+
+// -----------------------------------------------------------
+// VẼ POPUP THÔNG BÁO (đè lên game)
+// -----------------------------------------------------------
+function drawPopup() {
+  // Vẽ game bên dưới (game vẫn chạy nhưng tạm dừng)
+  draw();
+
+  const pct     = stateData.popupTimer / stateData.popupDuration;
+  const alpha   = pct < 0.15 ? pct / 0.15
+                : pct > 0.75 ? 1 - (pct - 0.75) / 0.25
+                : 1;
+
+  const slideY  = H / 2 - 30 - (1 - alpha) * 20;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  const bw = 300, bh = 60;
+  const bx = W / 2 - bw / 2;
+
+  ctx.fillStyle   = '#0D2137';
+  ctx.fillRect(bx, slideY, bw, bh);
+
+  ctx.strokeStyle = stateData.popupColor;
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(bx, slideY, bw, bh);
+
+  ctx.shadowColor = stateData.popupColor;
+  ctx.shadowBlur  = 14;
+  ctx.fillStyle   = stateData.popupColor;
+  ctx.font        = "bold 15px 'Courier New'";
+  ctx.textAlign   = 'center';
+  ctx.fillText(stateData.popupMessage, W / 2, slideY + 37);
+
+  ctx.restore();
+}
+
+
+// -----------------------------------------------------------
+// VẼ MÀN HÌNH GAME OVER
+// -----------------------------------------------------------
+function drawGameOver() {
+  ctx.fillStyle = COLORS.BG_DEEP;
+  ctx.fillRect(0, 0, W, H);
+  drawGrid();
+
+  const won = stateData.gameOverWon;
+
+  // Màu sắc & text theo kết quả
+  const accentColor = won ? '#00FF88' : '#FF2D55';
+  const title       = won ? '[ MISSION COMPLETE ]' : '[ SYSTEM BREACHED ]';
+  const subtitle    = won ? 'Server đã được bảo vệ thành công!' : 'Server đã bị xâm nhập. Hệ thống sụp đổ!';
+
+  ctx.save();
+  ctx.shadowColor = accentColor;
+  ctx.shadowBlur  = 40;
+  ctx.fillStyle   = accentColor;
+  ctx.font        = "bold 36px 'Courier New'";
+  ctx.textAlign   = 'center';
+  ctx.fillText(title, W / 2, H / 2 - 80);
+  ctx.restore();
+
+  ctx.fillStyle  = COLORS.TEXT;
+  ctx.font       = "16px 'Courier New'";
+  ctx.textAlign  = 'center';
+  ctx.fillText(subtitle, W / 2, H / 2 - 36);
+
+  // Stats
+  ctx.fillStyle = COLORS.TEXT_MUTED;
+  ctx.font      = "13px 'Courier New'";
+  ctx.fillText(`Server HP còn lại: ${game.serverHP} / ${game.serverMaxHP}`, W / 2, H / 2 + 2);
+  ctx.fillText(`Gold: ${game.gold}  |  Wave đã qua: ${Math.min(game.wave - 1, game.totalWaves)} / ${game.totalWaves}`, W / 2, H / 2 + 24);
+
+  // Nút CHƠI LẠI
+  const btnW = 220, btnH = 46;
+  const btnX = W / 2 - btnW / 2;
+  const btnY = H / 2 + 60;
+
+  ctx.fillStyle   = won ? 'rgba(0, 255, 136, 0.12)' : 'rgba(255, 45, 85, 0.12)';
+  ctx.fillRect(btnX, btnY, btnW, btnH);
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(btnX, btnY, btnW, btnH);
+
+  ctx.fillStyle  = accentColor;
+  ctx.font       = "bold 16px 'Courier New'";
+  ctx.textAlign  = 'center';
+  ctx.fillText('[ CHƠI LẠI ]', W / 2, btnY + 30);
+
+  drawGameOver._btnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+}
+
+
+// -----------------------------------------------------------
+// RESET GAME — khởi động lại hoàn toàn
+// -----------------------------------------------------------
+function resetGame() {
+  game.gold       = 500;
+  game.serverHP   = 100;
+  game.wave       = 1;
+  enemies         = [];
+  projectiles     = [];
+  towers          = [];
+  goldPopups      = [];
+  spawnTimer      = 0;
+  selectedSlot    = -1;
+  for (let i = 0; i < slotState.length; i++) slotState[i] = null;
+  setState(STATE.PLAYING);
+}
+
+
+// -----------------------------------------------------------
+// KIỂM TRA ĐIỀU KIỆN WIN/LOSE trong update()
+//  - Server HP ≤ 0 → GAME_OVER (thua)
+//  - Hết wave + không còn enemy → WAVE_CLEAR → nếu là wave cuối → GAME_OVER (thắng)
+// -----------------------------------------------------------
+function checkWinLose() {
+  if (game.serverHP <= 0) {
+    setState(STATE.GAME_OVER, { won: false });
+    return;
+  }
+}
+
+// Gọi khi enemy đến đích (server)
+function enemyReachedServer(enemy) {
+  game.serverHP = Math.max(0, game.serverHP - enemy.damage);
+  enemy.alive   = false;
+  console.log(`⚠ ${enemy.type} hit server! HP: ${game.serverHP}`);
+  checkWinLose();
+}
+
+
+// -----------------------------------------------------------
+// ĐẾM SỐ QUÁI CÒN SPAWN TRONG WAVE
+// -----------------------------------------------------------
+const WAVE_ENEMY_COUNT = 8;   // số quái mỗi wave
+let enemiesSpawnedThisWave = 0;
+
+function resetWaveCounters() {
+  enemiesSpawnedThisWave = 0;
+  spawnTimer = 0;
+}
+
+
+// -----------------------------------------------------------
+// PATCH: spawnEnemy() cũ → gắn thêm đếm wave + check done
+// -----------------------------------------------------------
+const _origSpawnEnemy = spawnEnemy;
+spawnEnemy = function() {
+  if (currentState !== STATE.PLAYING) return;
+  if (enemiesSpawnedThisWave >= WAVE_ENEMY_COUNT) return;
+
+  _origSpawnEnemy();
+  enemiesSpawnedThisWave++;
+};
+
+
+// -----------------------------------------------------------
+// PATCH: checkCollisions() cũ → thêm kiểm tra enemy đến đích
+// -----------------------------------------------------------
+const _origCheckCollisions = checkCollisions;
+checkCollisions = function() {
+  // Kiểm tra enemy đến server (vượt qua bên phải canvas)
+  enemies.forEach(enemy => {
+    if (enemy.alive && enemy.x > W - 72) {
+      enemyReachedServer(enemy);
+    }
+  });
+
+  _origCheckCollisions();
+
+  // Sau khi xóa enemy, kiểm tra xem wave đã clear chưa
+  if (currentState === STATE.PLAYING) {
+    const allSpawned = enemiesSpawnedThisWave >= WAVE_ENEMY_COUNT;
+    const noEnemies  = enemies.length === 0;
+    if (allSpawned && noEnemies) {
+      game.wave++;
+      if (game.wave > game.totalWaves) {
+        // Thắng game
+        setState(STATE.WAVE_CLEAR);
+        // Sau khi WAVE_CLEAR hiển thị, sẽ chuyển sang GAME_OVER (thắng)
+      } else {
+        setState(STATE.WAVE_CLEAR);
+      }
+      resetWaveCounters();
+    }
+  }
+};
+
+
+// -----------------------------------------------------------
+// PATCH: gameLoop() cũ → thêm state machine
+// -----------------------------------------------------------
+const _origGameLoop = gameLoop;
+
+// Override hoàn toàn gameLoop
+// (hàm cũ đã được gọi 1 lần, nên ta dừng nó bằng flag)
+let stateMachineActive = false;
+
+function stateGameLoop() {
+  const now  = Date.now();
+  const dt   = Math.min((now - lastTime) / 1000, 0.1);
+  lastTime   = now;
+
+  switch (currentState) {
+
+    // -------------------------------------------------------
+    case STATE.MENU:
+      drawMenu();
+      break;
+
+    // -------------------------------------------------------
+    case STATE.PLAYING:
+      // Chạy đúng logic update cũ
+      spawnTimer += dt;
+      if (spawnTimer >= SPAWN_INTERVAL) {
+        spawnEnemy();
+        spawnTimer = 0;
+      }
+      updateTowers(dt);
+      enemies.forEach(e => { e.move(dt); e.updateFlash(dt); });
+      projectiles.forEach(p => p.move(dt));
+      checkCollisions();
+      updateGoldPopups(dt);
+      draw();
+      break;
+
+    // -------------------------------------------------------
+    case STATE.WAVE_CLEAR:
+      stateData.waveClearTimer += dt;
+      drawWaveClear();
+
+      if (stateData.waveClearTimer >= stateData.waveClearDuration) {
+        if (game.wave > game.totalWaves) {
+          setState(STATE.GAME_OVER, { won: true });
+        } else {
+          setState(STATE.PLAYING);
+        }
+      }
+      break;
+
+    // -------------------------------------------------------
+    case STATE.POPUP:
+      stateData.popupTimer += dt;
+      drawPopup();
+
+      if (stateData.popupTimer >= stateData.popupDuration) {
+        currentState = stateData.popupPrevState;
+      }
+      break;
+
+    // -------------------------------------------------------
+    case STATE.GAME_OVER:
+      drawGameOver();
+      break;
+  }
+
+  requestAnimationFrame(stateGameLoop);
+}
+
+
+// -----------------------------------------------------------
+// PATCH CLICK — thêm xử lý cho MENU & GAME_OVER
+// -----------------------------------------------------------
+canvas.addEventListener('click', function(e) {
+  const rect   = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  const mx     = (e.clientX - rect.left) * scaleX;
+  const my     = (e.clientY - rect.top)  * scaleY;
+
+  // MENU → nút bắt đầu
+  if (currentState === STATE.MENU) {
+    const btn = drawMenu._btnRect;
+    if (btn && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
+      setState(STATE.PLAYING);
+    }
+    return;
+  }
+
+  // GAME_OVER → nút chơi lại
+  if (currentState === STATE.GAME_OVER) {
+    const btn = drawGameOver._btnRect;
+    if (btn && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
+      resetGame();
+    }
+    return;
+  }
+
+  // WAVE_CLEAR / POPUP → chặn click qua
+  if (currentState === STATE.WAVE_CLEAR || currentState === STATE.POPUP) return;
+
+}, true);   // capture phase để chạy TRƯỚC listener cũ
+
+
+// -----------------------------------------------------------
+// KHỞI ĐỘNG STATE MACHINE
+//  Dừng vòng lặp cũ (đã chạy rồi) bằng cách override requestAnimationFrame
+//  → Đơn giản hơn: chỉ cần stateGameLoop tự lặp, loop cũ sẽ
+//    tiếp tục gọi gameLoop() nhưng gameLoop() giờ không làm gì.
+// -----------------------------------------------------------
+// Override gameLoop cũ thành no-op
+window._oldGameLoop = gameLoop;
+gameLoop = function() {};   // vô hiệu vòng lặp cũ
+
+// Đặt state ban đầu và chạy loop mới
+currentState = STATE.MENU;
+lastTime     = Date.now();
+stateGameLoop();
