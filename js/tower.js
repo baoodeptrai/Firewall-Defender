@@ -14,8 +14,9 @@ class Tower {
   /**
    * @param {number} x  - tọa độ X tâm tower (pixel)
    * @param {number} y  - tọa độ Y tâm tower (pixel)
+   * @param {string} targetType - loại quái được bắn (null = bắn tất cả)
    */
-  constructor(x, y) {
+  constructor(x, y, targetType = null) {
     this.x         = x;
     this.y         = y;
 
@@ -29,6 +30,9 @@ class Tower {
 
     // --- Trạng thái ---
     this.isActive  = false;          // true khi tower được đặt vào slot
+
+    // --- Loại quái mục tiêu ---
+    this.targetType = targetType;    // chỉ bắn enemy có type này
   }
 
 
@@ -44,6 +48,9 @@ class Tower {
 
     for (const enemy of enemies) {
       if (!enemy.alive) continue;
+
+      // Chỉ bắn đúng loại quái được giao
+      if (this.targetType && enemy.type !== this.targetType) continue;
 
       const dx   = enemy.x - this.x;
       const dy   = enemy.y - this.y;
@@ -61,17 +68,6 @@ class Tower {
 
   // ---------------------------------------------------------
   // update(deltaTime, enemies)
-  //  Gọi mỗi frame từ updateTowers() trong game.js.
-  //
-  //  Logic:
-  //   1. Bỏ qua nếu tower chưa được đặt (isActive = false).
-  //   2. Giảm shootTimer theo thời gian đã trôi qua.
-  //   3. Khi shootTimer hết hạn (≤ 0):
-  //      a. Tìm enemy gần nhất trong range.
-  //      b. Nếu tìm được → tạo projectile bay về phía enemy.
-  //      c. Reset shootTimer = fireRate (cooldown mới bắt đầu).
-  //      d. Nếu không có enemy → KHÔNG reset timer, tiếp tục
-  //         đếm xuống để bắn ngay khi có enemy vào range.
   // ---------------------------------------------------------
   update(deltaTime, enemies) {
     if (!this.isActive) return;
@@ -89,18 +85,12 @@ class Tower {
         // Reset cooldown — tower nghỉ fireRate giây trước khi bắn tiếp
         this.shootTimer = this.fireRate;
       }
-      // Nếu không có target: shootTimer để ≤ 0,
-      // frame tiếp theo sẽ kiểm tra lại ngay mà không delay thêm
     }
   }
 
 
   // ---------------------------------------------------------
   // draw(ctx)
-  //  Vẽ tower lên canvas:
-  //   - Vòng tròn phạm vi mờ (range circle)
-  //   - Hình chữ nhật thân tower với glow
-  //   - Ký hiệu "T" ở giữa
   // ---------------------------------------------------------
   draw(ctx) {
     if (!this.isActive) return;
@@ -114,7 +104,6 @@ class Tower {
     ctx.strokeStyle = 'rgba(0, 212, 255, 0.12)';
     ctx.lineWidth   = 1;
     ctx.stroke();
-    // Fill rất mờ để không che đường và enemy
     ctx.fillStyle   = 'rgba(0, 212, 255, 0.03)';
     ctx.fill();
     ctx.restore();
@@ -128,11 +117,9 @@ class Tower {
     ctx.shadowColor = '#00D4FF';
     ctx.shadowBlur  = 12;
 
-    // Nền tower
     ctx.fillStyle = '#0D2137';
     ctx.fillRect(sx, sy, size, size);
 
-    // Viền cyan sáng
     ctx.strokeStyle = '#00D4FF';
     ctx.lineWidth   = 2;
     ctx.strokeRect(sx, sy, size, size);
@@ -145,6 +132,6 @@ class Tower {
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('T', x, y);
-    ctx.textBaseline = 'alphabetic'; // reset về default
+    ctx.textBaseline = 'alphabetic';
   }
 }
