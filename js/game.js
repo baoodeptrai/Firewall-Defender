@@ -399,7 +399,7 @@ function buyTower(slotIndex, towerConfig) {
 
   // Tạo Tower object cho logic bắn đạn của B
   const slot = MAP.slots[slotIndex];
-  const towerObj = new Tower(slot.x, MAP.roadY - 20,towerConfig.tagetType);
+  const towerObj = new Tower(slot.x, MAP.roadY - 20,towerConfig.targetType);
   towerObj.isActive = true;
   towers[slotIndex] = towerObj;        // lưu đúng vị trí slot
 
@@ -515,83 +515,6 @@ class Projectile {
     ctx.restore();
   }
 }
-
-
-// -----------------------------------------------------------
-// 5.5b CLASS TOWER — tháp phòng thủ
-// -----------------------------------------------------------
-class Tower {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.range = 250;         // phạm vi bắn
-    this.fireRate = TOWER_FIRE_RATE;
-    this.shootTimer = 0;      // bộ đếm bắn
-    this.isActive = false;    // có được đặt không
-  }
-
-  // Tìm enemy gần nhất trong phạm vi
-  getTargetEnemy(enemies) {
-    let closest = null;
-    let closestDist = this.range + 1;
-
-    enemies.forEach(enemy => {
-      if (!enemy.alive) return;
-
-      const dx = enemy.x - this.x;
-      const dy = enemy.y - this.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < closestDist) {
-        closestDist = dist;
-        closest = enemy;
-      }
-    });
-
-    return closest;
-  }
-
-  update(deltaTime, enemies) {
-    if (!this.isActive) return;
-
-    this.shootTimer -= deltaTime;
-
-    if (this.shootTimer <= 0) {
-      const target = this.getTargetEnemy(enemies);
-      if (target) {
-        spawnProjectile(this.x, this.y, target);
-        this.shootTimer = this.fireRate;
-      }
-    }
-  }
-
-  draw(ctx) {
-    if (!this.isActive) return;
-
-    // Vẽ tower dưới dạng hình vuông nhỏ
-    const size = 20;
-    const sx = this.x - size / 2;
-    const sy = this.y - size / 2;
-
-    // Nền tower
-    ctx.fillStyle = '#0099CC';
-    ctx.fillRect(sx, sy, size, size);
-
-    // Viền
-    ctx.strokeStyle = '#00FF88';
-    ctx.lineWidth   = 2;
-    ctx.strokeRect(sx, sy, size, size);
-
-    // Phạm vi (tùy chọn)
-    ctx.strokeStyle = 'rgba(0, 255, 136, 0.1)';
-    ctx.lineWidth   = 1;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-}
-
-
 
 // -----------------------------------------------------------
 // 5.6 HÀM SPAWN ĐẠN
