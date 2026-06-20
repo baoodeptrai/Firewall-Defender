@@ -82,6 +82,7 @@ const TOWERS = [
     price:   100,
     color:   '#00D4FF',
     counter: 'DDoS',
+    targetType: 'ddos',
     desc:    'Chặn DDoS hiệu quả',
   },
   {
@@ -90,6 +91,7 @@ const TOWERS = [
     price:   150,
     color:   '#00FF88',
     counter: 'Malware',
+    targetType: 'malware',
     desc:    'Diệt Malware hiệu quả',
   },
   {
@@ -98,6 +100,7 @@ const TOWERS = [
     price:   120,
     color:   '#FFD700',
     counter: 'Phishing',
+    targetType: 'phishing',
     desc:    'Chặn Phishing hiệu quả',
   },
 ];
@@ -396,7 +399,7 @@ function buyTower(slotIndex, towerConfig) {
 
   // Tạo Tower object cho logic bắn đạn của B
   const slot = MAP.slots[slotIndex];
-  const towerObj = new Tower(slot.x, MAP.roadY - 20);
+  const towerObj = new Tower(slot.x, MAP.roadY - 20,towerConfig.tagetType);
   towerObj.isActive = true;
   towers[slotIndex] = towerObj;        // lưu đúng vị trí slot
 
