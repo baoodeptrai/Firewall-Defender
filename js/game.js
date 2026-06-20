@@ -66,11 +66,11 @@ const MAP = {
 // 4. TRẠNG THÁI GAME (sẽ mở rộng dần ở các ngày sau)
 // -----------------------------------------------------------
 const game = {
-  gold:       500,    // tiền ban đầu
+  gold:       150,    // tiền ban đầu
   serverHP:   100,    // máu server
   serverMaxHP:100,
   wave:       1,      // wave hiện tại
-  totalWaves: 3,
+  totalWaves: 10,
 };
 // -----------------------------------------------------------
 // DANH SÁCH TOWER CÓ THỂ MUA
