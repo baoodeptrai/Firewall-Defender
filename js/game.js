@@ -66,11 +66,11 @@ const MAP = {
 // 4. TRẠNG THÁI GAME (sẽ mở rộng dần ở các ngày sau)
 // -----------------------------------------------------------
 const game = {
-  gold:       150,    // tiền ban đầu
+  gold:       500,    // tiền ban đầu
   serverHP:   100,    // máu server
   serverMaxHP:100,
   wave:       1,      // wave hiện tại
-  totalWaves: 10,
+  totalWaves: 8,
 };
 // -----------------------------------------------------------
 // DANH SÁCH TOWER CÓ THỂ MUA
@@ -80,28 +80,46 @@ const TOWERS = [
     id:      'firewall',
     name:    'FIREWALL',
     price:   100,
+    damage:  20,
+    range:   150,
     color:   '#00D4FF',
-    counter: 'DDoS',
-    targetType: 'ddos',
     desc:    'Chặn DDoS hiệu quả',
   },
   {
     id:      'antivirus',
     name:    'ANTIVIRUS',
-    price:   150,
+    price:   80,
+    damage:  25,
+    range:   120,
     color:   '#00FF88',
-    counter: 'Malware',
-    targetType: 'malware',
     desc:    'Diệt Malware hiệu quả',
   },
   {
     id:      'awareness',
     name:    'AWARENESS',
-    price:   120,
+    price:   60,
+    damage:  15,
+    range:   100,
     color:   '#FFD700',
-    counter: 'Phishing',
-    targetType: 'phishing',
-    desc:    'Chặn Phishing hiệu quả',
+    desc:    'Phát hiện Phishing và cảnh báo',
+  },
+  {
+    id:      'encryption',
+    name:    'ENCRYPTION',
+    price:   150,
+    damage:  30,
+    range:   130,
+    color:   '#CC00FF',
+    desc:    'Mã hóa và chống Ransomware',
+  },
+  {
+    id:      'idsips',
+    name:    'IDS/IPS',
+    price:   200,
+    damage:  35,
+    range:   200,
+    color:   '#FF6B00',
+    desc:    'Giám sát và phản ứng APT/DDoS',
   },
 ];
 
@@ -272,7 +290,7 @@ function drawSlots() {
 // -----------------------------------------------------------
 function drawBuyMenu(slotIndex) {
   const slot  = MAP.slots[slotIndex];
-  const menuW = 160;
+  const menuW = 200;
   const menuH = TOWERS.length * 52 + 12;
   const mx    = Math.min(slot.x - menuW / 2, W - menuW - 8);  // không tràn ra phải
   const my    = MAP.roadY + MAP.roadH + 12;
@@ -334,12 +352,12 @@ function drawBuyMenu(slotIndex) {
 // XỬ LÝ CLICK CHUỘT
 // -----------------------------------------------------------
 canvas.addEventListener('click', function(e) {
-  // Tính tọa độ click so với canvas (không phải trang web)
+  if (currentState !== STATE.PLAYING) return;
   const rect = canvas.getBoundingClientRect();
   const scaleX = W / rect.width;
-  const scaleY = H / rect.height;   // ← thêm dòng này
+  const scaleY = H / rect.height;
   const mouseX = (e.clientX - rect.left) * scaleX;
-  const mouseY = (e.clientY - rect.top)  * scaleY;  // ← đổi scaleX → scaleY
+  const mouseY = (e.clientY - rect.top)  * scaleY;
 
   const { roadY, slotW, slotH, slots } = MAP;
 
@@ -397,11 +415,15 @@ function buyTower(slotIndex, towerConfig) {
   game.gold -= towerConfig.price;
   slotState[slotIndex] = towerConfig;  // để drawSlots() vẽ đúng
 
-  // Tạo Tower object cho logic bắn đạn của B
   const slot = MAP.slots[slotIndex];
-  const towerObj = new Tower(slot.x, MAP.roadY - 20,towerConfig.targetType);
+  const towerObj = new Tower(slot.x, MAP.roadY - 20);
   towerObj.isActive = true;
-  towers[slotIndex] = towerObj;        // lưu đúng vị trí slot
+  towerObj.config = towerConfig;
+  towerObj.type = towerConfig.id;
+  towerObj.damage = towerConfig.damage;
+  towerObj.range = towerConfig.range;
+  towerObj.color = towerConfig.color;
+  towers[slotIndex] = towerObj;
 
   selectedSlot = -1;
 }
@@ -469,59 +491,14 @@ function drawHPBar(x, y, w, h, current, max) {
 }
 
 
-// -----------------------------------------------------------
-// 5.5 CLASS PROJECTILE — đạn bắn từ tower
-//  Simple: di chuyển về phía phải, vẽ dưới dạng hình vuông nhỏ
-// -----------------------------------------------------------
-class Projectile {
-  constructor(x, y, targetX, targetY, speed = PROJECTILE_SPEED) {
-    this.x      = x;
-    this.y      = y;
-    this.speed  = speed;
-    this.radius = 5;    // bán kính hình tròn đạn
-    this.damage = TOWER_DAMAGE;
-    this.alive  = true;
-
-    const dx = targetX - x;
-    const dy = targetY - y;
-    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-
-    this.vx = (dx / distance) * speed;
-    this.vy = (dy / distance) * speed;
-  }
-
-  move(deltaTime) {
-    this.x += this.vx * deltaTime;
-    this.y += this.vy * deltaTime;
-  }
-
-  draw(ctx) {
-    if (!this.alive) return;
-
-    // Vẽ đạn dưới dạng hình tròn xanh nhỏ với glow
-    ctx.save();
-    ctx.shadowColor = COLORS.CYAN;
-    ctx.shadowBlur  = 8;
-
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = COLORS.CYAN;
-    ctx.fill();
-
-    ctx.strokeStyle = '#00FF88';
-    ctx.lineWidth   = 1;
-    ctx.stroke();
-
-    ctx.restore();
-  }
-}
 
 // -----------------------------------------------------------
 // 5.6 HÀM SPAWN ĐẠN
 //  Tower tại vị trí slot bắn về phía quái
 // -----------------------------------------------------------
-function spawnProjectile(towerX, towerY, targetEnemy) {
-  const projectile = new Projectile(towerX, towerY, targetEnemy.x, targetEnemy.y);
+function spawnProjectile(towerX, towerY, targetEnemy, towerConfig) {
+  const damage = calculateDamage(towerConfig, targetEnemy.type, towerConfig.damage);
+  const projectile = new Projectile(towerX, towerY, targetEnemy, damage);
   projectiles.push(projectile);
 }
 
@@ -690,19 +667,9 @@ function update() {
 //     Random loại quái: malware | phishing | ddos
 // -----------------------------------------------------------
 function spawnEnemy() {
-  const types = ['malware', 'phishing', 'ddos'];
-  const typeConfigs = {
-    malware:  { hp: 80,  speed: 60,  damage: 15 },
-    phishing: { hp: 40,  speed: 120,  damage: 10 },
-    ddos:     { hp: 200, speed: 30,  damage: 35 },
-  };
-
-  const type = types[Math.floor(Math.random() * types.length)];
-  const config = typeConfigs[type];
-
-  const enemy = new Enemy(type, config.hp, config.speed, config.damage);
+  const type = getWaveType(game.wave, enemiesSpawnedThisWave);
+  const enemy = createEnemy(type);
   enemies.push(enemy);
-
   console.log(`✓ Spawned ${type} enemy at x=${enemy.x}`);
 }
 
@@ -743,6 +710,7 @@ const STATE = {
   MENU:       'MENU',
   PLAYING:    'PLAYING',
   WAVE_CLEAR: 'WAVE_CLEAR',
+  EDUCATION:  'EDUCATION',
   POPUP:      'POPUP',
   GAME_OVER:  'GAME_OVER',
 };
@@ -940,7 +908,6 @@ function drawWaveClear() {
 // VẼ POPUP THÔNG BÁO (đè lên game)
 // -----------------------------------------------------------
 function drawPopup() {
-  // Vẽ game bên dưới (game vẫn chạy nhưng tạm dừng)
   draw();
 
   const pct     = stateData.popupTimer / stateData.popupDuration;
@@ -971,6 +938,13 @@ function drawPopup() {
   ctx.fillText(stateData.popupMessage, W / 2, slideY + 37);
 
   ctx.restore();
+}
+
+function drawEducation() {
+  draw();
+  ctx.fillStyle = 'rgba(10, 22, 40, 0.72)';
+  ctx.fillRect(0, 0, W, H);
+  PopupManager.draw(ctx);
 }
 
 
@@ -1033,7 +1007,7 @@ function drawGameOver() {
 // RESET GAME — khởi động lại hoàn toàn
 // -----------------------------------------------------------
 function resetGame() {
-  game.gold       = 150;
+  game.gold       = 500;
   game.serverHP   = 100;
   game.wave       = 1;
   enemies         = [];
@@ -1071,7 +1045,6 @@ function enemyReachedServer(enemy) {
 // -----------------------------------------------------------
 // ĐẾM SỐ QUÁI CÒN SPAWN TRONG WAVE
 // -----------------------------------------------------------
-const WAVE_ENEMY_COUNT = 8;   // số quái mỗi wave
 let enemiesSpawnedThisWave = 0;
 
 function resetWaveCounters() {
@@ -1171,10 +1144,18 @@ function stateGameLoop() {
       if (stateData.waveClearTimer >= stateData.waveClearDuration) {
         if (game.wave > game.totalWaves) {
           setState(STATE.GAME_OVER, { won: true });
+        } else if (shouldShowWavePopup(game.wave)) {
+          PopupManager.openWave(game.wave);
+          setState(STATE.EDUCATION);
         } else {
           setState(STATE.PLAYING);
         }
       }
+      break;
+
+    // -------------------------------------------------------
+    case STATE.EDUCATION:
+      drawEducation();
       break;
 
     // -------------------------------------------------------
@@ -1221,6 +1202,14 @@ canvas.addEventListener('click', function(e) {
     const btn = drawGameOver._btnRect;
     if (btn && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
       resetGame();
+    }
+    return;
+  }
+
+  if (currentState === STATE.EDUCATION) {
+    const result = PopupManager.handleClick(mx, my);
+    if (result === 'continue') {
+      setState(STATE.PLAYING);
     }
     return;
   }

@@ -34,9 +34,15 @@
   <!-- Đây là "màn hình" game, mọi thứ sẽ được vẽ lên đây bằng JavaScript -->
   <canvas id="gameCanvas" width="900" height="500"></canvas>
 
-  <!-- Load file enemy.js TRƯỚC game.js để class Enemy được định nghĩa -->
+  <!-- Load script modules in dependency order -->
+  <script src="js/utils.js"></script>
   <script src="js/enemy.js"></script>
+  <script src="js/projectile.js"></script>
   <script src="js/tower.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/popup.js"></script>
+  <script src="js/wave.js"></script>
   <script src="js/game.js"></script>
 
 </body>

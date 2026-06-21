@@ -24,124 +24,189 @@ class Enemy {
 
   /**
    * @param {string} type   - loại quái: 'malware' | 'phishing' | 'ddos' | 'ransomware' | 'apt'
-   * @param {number} hp     - máu ban đầu (ví dụ: 80 với malware)
-   * @param {number} speed  - tốc độ di chuyển theo pixel/giây (ví dụ: 60)
+   * @param {number} hp     - máu ban đầu
+   * @param {number} speed  - tốc độ di chuyển theo pixel/giây
    * @param {number} damage - damage gây lên server khi chạm đến đích
    */
   constructor(type, hp, speed, damage) {
     this.type   = type;
     this.hp     = hp;
-    this.maxHp  = hp;      // lưu lại để vẽ thanh máu chính xác
+    this.maxHp  = hp;
     this.speed  = speed;
     this.damage = damage;
 
-    // Vị trí xuất phát: bên trái canvas, giữa đường quái (y=250)
     this.x      = 0;
     this.y      = 250;
-
-    // Bán kính hình tròn đại diện cho quái
-    this.radius = 16;
-
-    // Màu lấy từ bảng — mặc định trắng nếu type lạ
+    this.radius = 18;
     this.color  = ENEMY_COLORS[type] ?? '#FFFFFF';
-
-    // Trạng thái: còn sống không?
     this.alive  = true;
-
-    // Flash effect khi trúng đạn: flashDuration > 0 = đang flash
     this.flashDuration = 0;
-    this.flashColor    = '#FFFFFF';
   }
 
-
-  // ---------------------------------------------------------
-  // move(deltaTime)
-  //  Tăng x mỗi frame dựa trên tốc độ và thời gian đã trôi qua.
-  //  deltaTime (giây) giúp tốc độ ổn định bất kể FPS thay đổi.
-  //
-  //  Cách dùng: enemy.move(deltaTime) trong gameLoop
-  //  Nếu chưa có deltaTime, gọi enemy.move() — dùng giá trị mặc định 1/60
-  // ---------------------------------------------------------
   move(deltaTime = 1 / 60) {
     this.x += this.speed * deltaTime;
   }
 
-
-  // ---------------------------------------------------------
-  // draw(ctx)
-  //  Vẽ quái lên canvas:
-  //   - Hình tròn màu theo loại (glow effect nhẹ)
-  //   - Thanh HP bên trên
-  //   - Tên loại quái nhỏ ở giữa
-  // ---------------------------------------------------------
   draw(ctx) {
     if (!this.alive) return;
 
-    const { x, y, radius, color, hp, maxHp, type } = this;
-
-    // --- 1. Glow (ánh sáng phát ra xung quanh) ---
     ctx.save();
-    ctx.shadowColor = color;
-    ctx.shadowBlur  = 14;
-
-    // --- 2. Hình tròn chính ---
-    // Nếu đang flash, dùng màu flash; nếu không dùng màu gốc
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    
-    if (this.flashDuration > 0) {
-      // Flash trắng
-      ctx.fillStyle = 'rgba(255, 255, 255, ' + (this.flashDuration / 0.15) + ')';
-    } else {
-      ctx.fillStyle = color;
-    }
-    ctx.fill();
-
-    // --- 3. Viền tròn trắng nhạt để nổi bật trên nền tối ---
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth   = 1.5;
-    ctx.stroke();
-
-    ctx.restore();  // tắt shadow để không ảnh hưởng element khác
-
-    // --- 4. Nhãn loại quái (chữ nhỏ trong hình tròn) ---
-    ctx.fillStyle  = '#FFFFFF';
-    ctx.font       = "bold 7px 'Courier New'";
-    ctx.textAlign  = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(type.toUpperCase().slice(0, 4), x, y);
-    ctx.textBaseline = 'alphabetic';  // reset về default
-
-    // --- 5. Thanh HP phía trên hình tròn ---
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur  = 16;
+    this.drawSprite(ctx);
+    ctx.restore();
     this._drawHPBar(ctx);
   }
 
+  drawSprite(ctx) {
+    switch (this.type) {
+      case 'malware': return this._drawMalware(ctx);
+      case 'phishing': return this._drawPhishing(ctx);
+      case 'ddos': return this._drawDDoS(ctx);
+      case 'ransomware': return this._drawRansomware(ctx);
+      case 'apt': return this._drawAPT(ctx);
+      default: return this._drawDefault(ctx);
+    }
+  }
 
-  // ---------------------------------------------------------
-  // _drawHPBar(ctx)  [private helper]
-  //  Vẽ thanh máu nhỏ bên trên quái — đổi màu theo % HP còn lại
-  // ---------------------------------------------------------
+  _drawMalware(ctx) {
+    const spikes = 8;
+    const r = this.radius;
+    ctx.fillStyle = this.flashDuration > 0 ? '#FFFFFF' : this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    for (let i = 0; i < spikes; i += 1) {
+      const angle = (Math.PI * 2 / spikes) * i;
+      const startX = this.x + Math.cos(angle) * r;
+      const startY = this.y + Math.sin(angle) * r;
+      const endX = this.x + Math.cos(angle) * (r + 12);
+      const endY = this.y + Math.sin(angle) * (r + 12);
+      ctx.strokeStyle = '#FF8A9B';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  _drawPhishing(ctx) {
+    ctx.fillStyle = this.flashDuration > 0 ? '#FFFFFF' : this.color;
+    const w = this.radius * 2.2;
+    const h = this.radius * 1.3;
+    const left = this.x - w / 2;
+    const top = this.y - h / 2;
+
+    ctx.fillRect(left, top, w, h);
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(left, top, w, h);
+
+    ctx.beginPath();
+    ctx.moveTo(left, top);
+    ctx.lineTo(this.x, this.y + 4);
+    ctx.lineTo(left + w, top);
+    ctx.closePath();
+    ctx.fillStyle = '#FFF0A7';
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  _drawDDoS(ctx) {
+    const w = this.radius * 2.4;
+    const h = 14;
+    const gap = 6;
+    for (let i = 0; i < 3; i += 1) {
+      const y = this.y - 12 + i * (h + gap);
+      ctx.fillStyle = this.flashDuration > 0 ? '#FFFFFF' : '#5599FF';
+      ctx.fillRect(this.x - w / 2, y, w, h);
+      ctx.strokeStyle = '#D4E7FF';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(this.x - w / 2, y, w, h);
+    }
+  }
+
+  _drawRansomware(ctx) {
+    const bodyW = this.radius * 1.6;
+    const bodyH = this.radius * 1.4;
+    const left = this.x - bodyW / 2;
+    const top = this.y - bodyH / 2 + 6;
+
+    ctx.fillStyle = this.flashDuration > 0 ? '#FFFFFF' : this.color;
+    ctx.fillRect(left, top, bodyW, bodyH);
+    ctx.strokeStyle = '#E0B3FF';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(left, top, bodyW, bodyH);
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    ctx.arc(this.x, top, bodyW * 0.45, Math.PI, 0, false);
+    ctx.stroke();
+
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(this.x - 4, top + 6, 8, bodyH * 0.5);
+  }
+
+  _drawAPT(ctx) {
+    const size = this.radius * 1.4;
+    const a = size / 2;
+    const points = [];
+    for (let i = 0; i < 6; i += 1) {
+      const angle = Math.PI / 3 * i - Math.PI / 6;
+      points.push({
+        x: this.x + Math.cos(angle) * a,
+        y: this.y + Math.sin(angle) * a,
+      });
+    }
+
+    ctx.fillStyle = this.flashDuration > 0 ? '#FFFFFF' : '#111111';
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#FF2D55';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  _drawDefault(ctx) {
+    ctx.fillStyle = this.flashDuration > 0 ? '#FFFFFF' : this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
   _drawHPBar(ctx) {
-    const barW  = this.radius * 2.4;   // rộng bằng 2.4× bán kính
+    const barW  = this.radius * 2.4;
     const barH  = 4;
     const barX  = this.x - barW / 2;
-    const barY  = this.y - this.radius - 8;
+    const barY  = this.y - this.radius - 10;
     const pct   = this.hp / this.maxHp;
 
-    // Màu thanh HP: xanh > vàng > đỏ
     const barColor = pct > 0.6 ? '#00FF88'
                    : pct > 0.3 ? '#FFD700'
                    :              '#FF2D55';
 
-    // Nền xám
     ctx.fillStyle = '#1A2840';
     ctx.fillRect(barX, barY, barW, barH);
-
-    // Phần HP còn lại
     ctx.fillStyle = barColor;
     ctx.fillRect(barX, barY, barW * pct, barH);
-
-    // Viền mỏng
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
     ctx.lineWidth   = 0.5;
     ctx.strokeRect(barX, barY, barW, barH);
