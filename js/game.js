@@ -577,6 +577,9 @@ function draw() {
   
   drawHUD();     // thanh thông tin phía trên
   drawGoldPopups(ctx); // hiệu ứng +gold
+  GuideSystem.drawHelpButton(ctx);
+  GuideSystem.drawEnemyPopup(ctx, W, H);
+  GuideSystem.drawGuide(ctx, W, H);
 }
 
 
@@ -1112,22 +1115,22 @@ function stateGameLoop() {
 
     // -------------------------------------------------------
     case STATE.PLAYING:
-  if (!GuideSystem.guideVisible) {
-    const waveSpawnDelay = getWaveSpawnDelay(game.wave);
-    spawnTimer += dt;
-    if (spawnTimer >= waveSpawnDelay) {
-      spawnEnemy();
-      spawnTimer = 0;
-    }
-    updateTowers(dt);
-    enemies.forEach(e => { e.move(dt); e.updateFlash(dt); });
-    projectiles.forEach(p => p.move(dt));
-    checkCollisions();
-    updateGoldPopups(dt);
-    GuideSystem.update(dt);
-  }
-  draw();
-  break;
+      if (!GuideSystem.guideVisible) {
+        const waveSpawnDelay = getWaveSpawnDelay(game.wave);
+        spawnTimer += dt;
+        if (spawnTimer >= waveSpawnDelay) {
+          spawnEnemy();
+          spawnTimer = 0;
+        }
+        updateTowers(dt);
+        enemies.forEach(e => { e.move(dt); e.updateFlash(dt); });
+        projectiles.forEach(p => p.move(dt));
+        checkCollisions();
+        updateGoldPopups(dt);
+        GuideSystem.update(dt);
+      }
+      draw();
+      break;
 
     // -------------------------------------------------------
     case STATE.WAVE_CLEAR:
@@ -1186,6 +1189,7 @@ canvas.addEventListener('click', function(e) {
     const btn = drawMenu._btnRect;
     if (btn && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
       setState(STATE.PLAYING);
+      GuideSystem.openGuide();
     }
     return;
   }
@@ -1210,8 +1214,13 @@ canvas.addEventListener('click', function(e) {
   // WAVE_CLEAR / POPUP → chặn click qua
   if (currentState === STATE.WAVE_CLEAR || currentState === STATE.POPUP) return;
 
-}, true);   // capture phase để chạy TRƯỚC listener cũ
+  // PLAYING → GuideSystem xử lý nút ? và enemy click
+  if (currentState === STATE.PLAYING) {
+    if (GuideSystem.handleClick(mx, my)) return;
+    if (GuideSystem.checkEnemyClick(mx, my, enemies)) return;
+  }
 
+}, true);   // capture phase để chạy TRƯỚC listener cũ
 
 // -----------------------------------------------------------
 // KHỞI ĐỘNG STATE MACHINE
