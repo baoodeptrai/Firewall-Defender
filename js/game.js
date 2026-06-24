@@ -1112,19 +1112,22 @@ function stateGameLoop() {
 
     // -------------------------------------------------------
     case STATE.PLAYING:
-      const waveSpawnDelay = getWaveSpawnDelay(game.wave);
-      spawnTimer += dt;
-      if (spawnTimer >= waveSpawnDelay) {
-        spawnEnemy();
-        spawnTimer = 0;
-      }
-      updateTowers(dt);
-      enemies.forEach(e => { e.move(dt); e.updateFlash(dt); });
-      projectiles.forEach(p => p.move(dt));
-      checkCollisions();
-      updateGoldPopups(dt);
-      draw();
-      break;
+  if (!GuideSystem.guideVisible) {
+    const waveSpawnDelay = getWaveSpawnDelay(game.wave);
+    spawnTimer += dt;
+    if (spawnTimer >= waveSpawnDelay) {
+      spawnEnemy();
+      spawnTimer = 0;
+    }
+    updateTowers(dt);
+    enemies.forEach(e => { e.move(dt); e.updateFlash(dt); });
+    projectiles.forEach(p => p.move(dt));
+    checkCollisions();
+    updateGoldPopups(dt);
+    GuideSystem.update(dt);
+  }
+  draw();
+  break;
 
     // -------------------------------------------------------
     case STATE.WAVE_CLEAR:
