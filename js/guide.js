@@ -27,7 +27,7 @@ const ENEMY_INFO = {
     threat: '★★☆☆☆',
     desc: 'Email lừa đảo. Máu thấp nhưng chạy rất nhanh — phải bắn sớm!',
     recommended: ['AWARENESS'],
-    weakness: 'Awareness phát hiện và hạ nhanh. IDS/IPS cũng hiệu quả.',
+    weakness: 'Awareness phát hiện và hạ nhanh.',
   },
   ddos: {
     name: 'DDoS',
@@ -37,8 +37,8 @@ const ENEMY_INFO = {
     damage: 35,
     threat: '★★★★☆',
     desc: 'Tấn công dồn dập, máu rất cao. Đặt Firewall phía trước để chặn!',
-    recommended: ['FIREWALL', 'IDS/IPS'],
-    weakness: 'Firewall + IDS/IPS phối hợp sẽ hạ trước khi đến server.',
+    recommended: ['FIREWALL'],
+    weakness: 'Firewall chặn hiệu quả trước khi DDoS đến server.',
   },
   ransomware: {
     name: 'RANSOMWARE',
@@ -59,8 +59,8 @@ const ENEMY_INFO = {
     damage: 50,
     threat: '★★★★★',
     desc: 'Mối đe dọa nâng cao — boss khó nhất! Dùng tất cả tower mạnh nhất.',
-    recommended: ['IDS/IPS', 'FIREWALL', 'ENCRYPTION'],
-    weakness: 'Cần tổng hợp tất cả tower. IDS/IPS là cốt lõi chống APT.',
+    recommended: [ 'FIREWALL', 'ENCRYPTION'],
+    weakness: 'Cần tổng hợp tất cả tower. Firewall + Encryption là cốt lõi chống APT.',
   },
 };
 
