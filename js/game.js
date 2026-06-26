@@ -757,6 +757,7 @@ function spawnEnemy() {
 function updateTowers(deltaTime) {
   towers.forEach(tower => {
     tower.update(deltaTime, enemies);
+    if (tower) tower.update(deltaTime, enemies);
   });
 }
 
