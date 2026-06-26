@@ -269,9 +269,13 @@ function drawSlots() {
     }
   });
 
-  // Vẽ menu mua tower nếu có slot đang được chọn
-  if (selectedSlot !== -1 && !slotState[selectedSlot]) {
-    drawBuyMenu(selectedSlot);
+ // Vẽ menu mua hoặc bán tuỳ slot trống/có tower
+  if (selectedSlot !== -1) {
+    if (!slotState[selectedSlot]) {
+      drawBuyMenu(selectedSlot);
+    } else {
+      drawSellMenu(selectedSlot);
+    }
   }
 }
 
@@ -336,6 +340,52 @@ function drawBuyMenu(slotIndex) {
     }
   });
 }
+// -----------------------------------------------------------
+// VẼ MENU BÁN TOWER (hiện khi click vào slot đã có tower)
+// -----------------------------------------------------------
+function drawSellMenu(slotIndex) {
+  const slot  = MAP.slots[slotIndex];
+  const tower = slotState[slotIndex];
+  if (!tower) return;
+
+  const menuW = 180;
+  const menuH = 80;
+  const mx    = Math.min(slot.x - menuW / 2, W - menuW - 8);
+  const my    = MAP.roadY + MAP.roadH + 12;
+
+  // Nền menu
+  ctx.fillStyle   = '#0D2137';
+  ctx.fillRect(mx, my, menuW, menuH);
+  ctx.strokeStyle = tower.color;
+  ctx.lineWidth   = 1.5;
+  ctx.strokeRect(mx, my, menuW, menuH);
+
+  // Tiêu đề
+  ctx.fillStyle  = tower.color;
+  ctx.font       = "bold 10px 'Courier New'";
+  ctx.textAlign  = 'left';
+  ctx.fillText(`[ ${tower.name} ]`, mx + 10, my + 16);
+
+  // Nút BÁN
+  const refund = Math.floor(tower.price * 0.5);
+  ctx.fillStyle = '#FF2D5522';
+  ctx.fillRect(mx + 8, my + 24, menuW - 16, 36);
+  ctx.strokeStyle = '#FF2D55';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(mx + 8, my + 24, menuW - 16, 36);
+
+  ctx.fillStyle  = '#FF2D55';
+  ctx.font       = "bold 11px 'Courier New'";
+  ctx.textAlign  = 'center';
+  ctx.fillText('🗑 BÁN TOWER', mx + menuW / 2, my + 38);
+
+  ctx.fillStyle = COLORS.GOLD;
+  ctx.font      = "10px 'Courier New'";
+  ctx.fillText(`Hoàn lại: ${refund}G`, mx + menuW / 2, my + 52);
+
+  // Lưu vùng click nút bán
+  drawSellMenu._btnRect = { x: mx + 8, y: my + 24, w: menuW - 16, h: 36, slotIndex };
+}
 
 
 // -----------------------------------------------------------
@@ -372,6 +422,18 @@ canvas.addEventListener('click', function(e) {
     }
     return;
   }
+// --- Kiểm tra click vào nút BÁN tower ---
+    if (selectedSlot !== -1 && slotState[selectedSlot]) {
+    const btn = drawSellMenu._btnRect;
+  
+    if (btn && mouseX >= btn.x && mouseX <= btn.x + btn.w &&
+               mouseY >= btn.y && mouseY <= btn.y + btn.h) {
+      sellTower(btn.slotIndex);
+      return;
+    }
+    }
+  
+
 
   // --- Kiểm tra click vào menu mua tower ---
   if (selectedSlot !== -1 && !slotState[selectedSlot]) {
@@ -416,6 +478,23 @@ function buyTower(slotIndex, towerConfig) {
   towers[slotIndex] = towerObj;
 
   selectedSlot = -1;
+}
+// -----------------------------------------------------------
+// BÁN TOWER — hoàn lại 50% giá trị
+// -----------------------------------------------------------
+function sellTower(slotIndex) {
+  const tower = slotState[slotIndex];
+  if (!tower) return;
+
+  const refund = Math.floor(tower.price * 0.5);
+  game.gold += refund;
+  createGoldPopup(refund, MAP.slots[slotIndex].x, MAP.roadY - 80);
+
+  slotState[slotIndex] = null;
+  towers[slotIndex] = null;
+  selectedSlot = -1;
+
+  console.log(`🗑 Sold ${tower.name}, refund: ${refund}G`);
 }
 
 
