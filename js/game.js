@@ -112,15 +112,6 @@ const TOWERS = [
     color:   '#CC00FF',
     desc:    'Mã hóa và chống Ransomware',
   },
-  {
-    id:      'idsips',
-    name:    'IDS/IPS',
-    price:   200,
-    damage:  35,
-    range:   200,
-    color:   '#FF6B00',
-    desc:    'Giám sát và phản ứng APT/DDoS',
-  },
 ];
 
 // Trạng thái từng slot — null = chưa đặt tower
