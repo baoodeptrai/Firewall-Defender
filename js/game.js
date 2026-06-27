@@ -577,6 +577,14 @@ function spawnProjectile(towerX, towerY, targetEnemy, towerConfig) {
 //  Khoảng cách giữa đạn và enemy < (radius đạn + radius enemy)
 // -----------------------------------------------------------
 function checkCollisions() {
+  // --- Kiểm tra enemy đến server ---
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const enemy = enemies[i];
+    if (enemy.alive && enemy.x > W) {
+      enemyReachedServer(enemy);
+    }
+  }
+
   // Lặp qua từng đạn
   for (let p = projectiles.length - 1; p >= 0; p--) {
     const projectile = projectiles[p];

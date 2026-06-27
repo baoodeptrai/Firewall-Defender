@@ -6,26 +6,56 @@
 const WAVE_CONFIG = [
   {
     wave: 1,
-    enemies: ['malware', 'phishing', 'malware', 'phishing', 'malware'],
+    enemies: ['malware', 'phishing', 'malware', 'phishing', 'malware', 'phishing', 'malware', 'phishing'],
     spawnDelay: 1.4,
     pauseAfter: 3.0,
   },
   {
     wave: 2,
-    enemies: ['malware', 'ddos', 'phishing', 'malware', 'phishing', 'malware'],
-    spawnDelay: 1.2,
-    pauseAfter: 3.5,
+    enemies: ['malware', 'phishing', 'malware', 'ddos', 'phishing', 'malware', 'phishing', 'malware'],
+    spawnDelay: 1.3,
+    pauseAfter: 3.0,
   },
   {
     wave: 3,
-    enemies: ['ddos', 'ransomware', 'phishing', 'malware', 'apt', 'apt'],
+    enemies: ['phishing', 'phishing', 'malware', 'phishing', 'malware', 'phishing', 'ddos', 'phishing'],
+    spawnDelay: 1.2,
+    pauseAfter: 0,
+  },
+  {
+    wave: 4,
+    enemies: ['malware', 'ddos', 'phishing', 'malware', 'ddos', 'phishing', 'malware', 'ddos'],
+    spawnDelay: 1.1,
+    pauseAfter: 2.5,
+  },
+  {
+    wave: 5,
+    enemies: ['ddos', 'ddos', 'malware', 'phishing', 'ddos', 'ransomware', 'ddos', 'phishing'],
     spawnDelay: 1.0,
+    pauseAfter: 0,
+  },
+  {
+    wave: 6,
+    enemies: ['ransomware', 'malware', 'ddos', 'phishing', 'ransomware', 'malware', 'ddos', 'phishing'],
+    spawnDelay: 0.9,
+    pauseAfter: 2.5,
+  },
+  {
+    wave: 7,
+    enemies: ['ransomware', 'ddos', 'malware', 'phishing', 'ransomware', 'ddos', 'malware', 'ransomware'],
+    spawnDelay: 0.8,
+    pauseAfter: 2.5,
+  },
+  {
+    wave: 8,
+    enemies: ['ransomware', 'apt', 'ddos', 'ransomware', 'phishing', 'apt', 'malware', 'apt'],
+    spawnDelay: 0.7,
     pauseAfter: 0,
   },
 ];
 
 const TOTAL_WAVES = WAVE_CONFIG.length;
-const WAVE_POPUP_WAVES = [2, 3];
+const WAVE_POPUP_WAVES = [3, 5, 8];
 
 function getWaveConfig(wave) {
   return WAVE_CONFIG[wave - 1] || WAVE_CONFIG[0];
