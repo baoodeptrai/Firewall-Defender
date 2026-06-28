@@ -4,38 +4,93 @@
 // ============================================================
 
 const POPUP_CONTENT = {
-  3: {
+  1: {
+    title: 'Malware',
+    lines: [
+      'Malware là phần mềm độc hại được thiết kế để phá hoại hoặc xâm nhập hệ thống.',
+      'Có nhiều loại: virus, worm, trojan, spyware...',
+      'Antivirus là biện pháp phòng thủ cơ bản và hiệu quả nhất.',
+    ],
+    law: 'Theo Luật An ninh mạng 2018, phát tán mã độc là hành vi bị nghiêm cấm.',
+    recommendations: 'Cài Antivirus, cập nhật phần mềm thường xuyên, không mở file lạ.',
+    connection: 'Antivirus tower trong game tiêu diệt Malware hiệu quả nhất.',
+  },
+  2: {
     title: 'Phishing',
     lines: [
-      'Phishing dùng email giả mạo hoặc trang web lừa đảo để đánh cắp thông tin.',
-      'Tấn công này dựa vào con người hơn là lỗ hổng kỹ thuật.',
-      'Firewall có thể không ngăn được Phishing nếu người dùng bị lừa mở liên kết độc hại.',
+      'Phishing dùng email giả mạo để lừa người dùng cung cấp thông tin nhạy cảm.',
+      'Đây là hình thức tấn công phổ biến nhất hiện nay.',
+      'Awareness và đào tạo người dùng là vũ khí quan trọng nhất.',
     ],
-    law: 'Theo Nghị định 85/2021/NĐ-CP, tổ chức phải bảo đảm an toàn thông tin cá nhân và dữ liệu.',
-    recommendations: 'Tăng cường đào tạo Awareness, dùng lọc email và cảnh báo người dùng.',
-    connection: 'Awareness tower giúp phát hiện Phishing và giảm rủi ro thông qua nhận diện xã hội kỹ thuật.',
+    law: 'Nghị định 85/2021/NĐ-CP yêu cầu bảo vệ thông tin cá nhân khỏi lừa đảo trực tuyến.',
+    recommendations: 'Xác minh nguồn gốc email, không click link lạ, bật xác thực 2 yếu tố.',
+    connection: 'Awareness tower phát hiện và làm chậm Phishing enemy trong game.',
   },
-  5: {
+  3: {
     title: 'DDoS',
     lines: [
-      'DDoS dùng nhiều nguồn tấn công cùng lúc để làm nghẽn mạng hoặc dịch vụ.',
-      'Giảm thiểu DDoS cần công cụ giám sát và phản ứng nhanh.',
-      'Firewall có tác dụng mạnh nếu thiết lập ưu tiên lọc lưu lượng đúng cách.',
+      'DDoS dùng hàng nghìn máy tính tấn công cùng lúc để làm nghẽn server.',
+      'Mục tiêu là làm dịch vụ không thể truy cập được.',
+      'Firewall chuyên dụng là tuyến phòng thủ đầu tiên.',
     ],
-    law: 'Theo Luật An toàn thông tin mạng 2015, hạ tầng mạng cần biện pháp phòng chống tấn công từ chối dịch vụ.',
-    recommendations: 'Triển khai Firewall chuyên dụng, giám sát lưu lượng và phân bổ tài nguyên.',
-    connection: 'Firewall tower trong game tăng sát thương với DDoS và hạn chế tổn thất.',
+    law: 'Luật An toàn thông tin mạng 2015 yêu cầu có biện pháp phòng chống DDoS cho hạ tầng quan trọng.',
+    recommendations: 'Triển khai Firewall, giám sát lưu lượng bất thường, dùng CDN.',
+    connection: 'Firewall tower tăng sát thương với DDoS và bảo vệ server hiệu quả.',
+  },
+  4: {
+    title: 'Kết hợp tấn công',
+    lines: [
+      'Hacker thường kết hợp nhiều loại tấn công cùng lúc để tăng hiệu quả.',
+      'DDoS để phân tán sự chú ý, Phishing để xâm nhập bên trong.',
+      'Defense-in-depth — bảo vệ theo nhiều lớp — là chiến lược đúng đắn.',
+    ],
+    law: 'ISO 27001 yêu cầu đánh giá rủi ro toàn diện và triển khai kiểm soát đa lớp.',
+    recommendations: 'Không phụ thuộc vào 1 biện pháp duy nhất, kết hợp nhiều tower khác nhau.',
+    connection: 'Dùng cả Firewall + Antivirus + Awareness để phòng thủ toàn diện.',
+  },
+  5: {
+    title: 'Ransomware',
+    lines: [
+      'Ransomware mã hóa toàn bộ dữ liệu và đòi tiền chuộc.',
+      'Một khi bị mã hóa, khôi phục dữ liệu rất khó nếu không có backup.',
+      'Encryption tower giúp bảo vệ dữ liệu trước khi bị tấn công.',
+    ],
+    law: 'Nghị định 53/2022/NĐ-CP yêu cầu bảo vệ dữ liệu cá nhân và hệ thống thông tin quan trọng.',
+    recommendations: 'Backup thường xuyên, cập nhật hệ thống, hạn chế quyền truy cập.',
+    connection: 'Encryption tower trong game kháng Ransomware tốt nhất.',
+  },
+  6: {
+    title: 'NIST Framework',
+    lines: [
+      'NIST CSF gồm 5 chức năng: Identify, Protect, Detect, Respond, Recover.',
+      'Đây là khung tiêu chuẩn để xây dựng chương trình an ninh mạng toàn diện.',
+      'Game này mô phỏng cả 5 chức năng qua hệ thống tower và wave.',
+    ],
+    law: 'NIST CSF được áp dụng rộng rãi tại Mỹ và nhiều nước, tương thích với ISO 27001.',
+    recommendations: 'Áp dụng đủ 5 chức năng NIST, không chỉ tập trung vào Protect.',
+    connection: 'Mỗi loại tower đại diện cho 1 chức năng NIST khác nhau.',
+  },
+  7: {
+    title: 'ISO 27001',
+    lines: [
+      'ISO 27001 là tiêu chuẩn quốc tế về quản lý an toàn thông tin (ISMS).',
+      'Yêu cầu đánh giá rủi ro, triển khai kiểm soát và cải tiến liên tục.',
+      'Vòng PDCA: Plan → Do → Check → Act.',
+    ],
+    law: 'ISO 27001 được công nhận toàn cầu, nhiều doanh nghiệp Việt Nam đang áp dụng.',
+    recommendations: 'Triển khai ISMS theo ISO 27001, đánh giá rủi ro định kỳ.',
+    connection: 'Hệ thống tower trong game ánh xạ với Annex A của ISO 27001.',
   },
   8: {
-    title: 'Ransomware + APT',
+    title: 'APT — Advanced Persistent Threat',
     lines: [
-      'Ransomware mã hóa dữ liệu để tống tiền nạn nhân.',
-      'APT là tấn công dài hạn, xâm nhập và duy trì truy cập trong hệ thống.',
-      'Kết hợp phòng thủ đa lớp giúp giảm thiểu cả hai mối đe dọa này.',
+      'APT là tấn công có chủ đích, dài hạn, do hacker chuyên nghiệp thực hiện.',
+      'Thường kết hợp nhiều kỹ thuật: social engineering, zero-day, lateral movement.',
+      'Cần phòng thủ đa lớp và giám sát liên tục để phát hiện APT.',
     ],
-    law: 'Nghị định 53/2022/NĐ-CP yêu cầu bảo vệ hệ thống thông tin quan trọng và dữ liệu riêng tư.',
-    recommendations: 'Dùng Antivirus, Encryption và IDS/IPS để phát hiện và ngăn chặn mã độc.',
-    connection: 'Antivirus, Encryption và IDS/IPS là những tower chiến lược để đối đầu Ransomware và APT.',
+    law: 'Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân yêu cầu phòng chống xâm phạm dài hạn.',
+    recommendations: 'Dùng IDS/IPS, giám sát log, phân tích hành vi bất thường.',
+    connection: 'Wave cuối game mô phỏng APT — cần tất cả tower để sống sót.',
   },
 };
 

@@ -4,8 +4,30 @@
 // ============================================================
 
 const QUIZ_DATA = {
+  1: {
+    question: 'Antivirus tower trong game chuyên diệt loại tấn công nào?',
+    choices: [
+      'DDoS',
+      'Phishing',
+      'Malware',
+      'Ransomware',
+    ],
+    correctIndex: 2,
+    reward: 15,
+  },
+  2: {
+    question: 'Phishing khác DDoS ở điểm nào?',
+    choices: [
+      'Phishing tấn công bằng lượng lớn traffic',
+      'Phishing lừa người dùng thay vì tấn công kỹ thuật',
+      'Phishing phá hủy phần cứng server',
+      'Phishing chỉ tấn công vào ban đêm',
+    ],
+    correctIndex: 1,
+    reward: 15,
+  },
   3: {
-    question: 'Vì sao Phishing vẫn có thể lọt qua Firewall trong game?',
+    question: 'Vì sao Phishing vẫn có thể lọt qua Firewall?',
     choices: [
       'Vì Phishing khai thác lỗi kỹ thuật Firewall',
       'Vì Phishing lừa người dùng mở liên kết độc hại',
@@ -15,8 +37,19 @@ const QUIZ_DATA = {
     correctIndex: 1,
     reward: 20,
   },
+  4: {
+    question: 'Defense-in-depth nghĩa là gì?',
+    choices: [
+      'Dùng 1 tower mạnh nhất để phòng thủ',
+      'Tấn công trước để ngăn hacker',
+      'Bảo vệ hệ thống bằng nhiều lớp phòng thủ khác nhau',
+      'Chỉ bảo vệ server ở tầng vật lý',
+    ],
+    correctIndex: 2,
+    reward: 20,
+  },
   5: {
-    question: 'Loại tấn công nào bị ngăn chặn tốt nhất khi sử dụng Firewall?',
+    question: 'Loại tấn công nào bị Firewall ngăn chặn hiệu quả nhất?',
     choices: [
       'Malware',
       'Phishing',
@@ -26,15 +59,37 @@ const QUIZ_DATA = {
     correctIndex: 2,
     reward: 25,
   },
-  8: {
-    question: 'Tower nào có hiệu quả nhất trước Ransomware trong game?',
+  6: {
+    question: 'NIST CSF gồm mấy chức năng cốt lõi?',
     choices: [
-      'Firewall',
-      'Antivirus',
-      'Awareness',
-      'IDS/IPS',
+      '3 chức năng',
+      '4 chức năng',
+      '5 chức năng',
+      '6 chức năng',
+    ],
+    correctIndex: 2,
+    reward: 25,
+  },
+  7: {
+    question: 'Vòng PDCA trong ISO 27001 là gì?',
+    choices: [
+      'Protect → Detect → Control → Act',
+      'Plan → Do → Check → Act',
+      'Prevent → Deploy → Configure → Audit',
+      'Patch → Defend → Control → Analyze',
     ],
     correctIndex: 1,
+    reward: 25,
+  },
+  8: {
+    question: 'APT (Advanced Persistent Threat) nguy hiểm vì điều gì?',
+    choices: [
+      'Tấn công rất nhanh và ồ ạt',
+      'Chỉ nhắm vào phần cứng server',
+      'Duy trì xâm nhập bí mật trong thời gian dài',
+      'Tự động lây lan qua email',
+    ],
+    correctIndex: 2,
     reward: 30,
   },
 };

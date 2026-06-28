@@ -1102,6 +1102,7 @@ function resetGame() {
   goldPopups      = [];
   spawnTimer      = 0;
   selectedSlot    = -1;
+  enemiesSpawnedThisWave = 0;
   for (let i = 0; i < slotState.length; i++) slotState[i] = null;
   setState(STATE.PLAYING);
 }
