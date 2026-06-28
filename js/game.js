@@ -37,7 +37,16 @@ const COLORS = {
   HP_MID:     '#FFD700',   // HP vàng
   HP_LOW:     '#FF2D55',   // HP đỏ
 };
+const STATE = {
+  MENU:       'MENU',
+  PLAYING:    'PLAYING',
+  WAVE_CLEAR: 'WAVE_CLEAR',
+  EDUCATION:  'EDUCATION',
+  POPUP:      'POPUP',
+  GAME_OVER:  'GAME_OVER',
+};
 
+let currentState = STATE.MENU;
 
 // -----------------------------------------------------------
 // 3. CẤU HÌNH MAP
@@ -66,7 +75,7 @@ const MAP = {
 // 4. TRẠNG THÁI GAME (sẽ mở rộng dần ở các ngày sau)
 // -----------------------------------------------------------
 const game = {
-  gold:       500,    // tiền ban đầu
+  gold:       150,    // tiền ban đầu
   serverHP:   100,    // máu server
   serverMaxHP:100,
   wave:       1,      // wave hiện tại
@@ -608,14 +617,18 @@ function checkCollisions() {
         const isDead = enemy.takeDamage(projectile.damage);
 
         if (isDead) {
-          // Enemy chết → cộng gold
-          game.gold += 50;
-          createGoldPopup(50, enemy.x, enemy.y - enemy.radius - 10);
-          console.log(`✓ Enemy ${enemy.type} defeated! +50 gold (total: ${game.gold})`);
-        } else {
-          console.log(`✓ Hit ${enemy.type}! HP: ${enemy.hp}/${enemy.maxHp}`);
+          const GOLD_REWARD = {
+          malware:    10,
+          phishing:   8,
+          ddos:       20,
+          ransomware: 18,
+          apt:        50,
+        };
+        const reward = GOLD_REWARD[enemy.type] ?? 10;
+        game.gold += reward;
+        createGoldPopup(reward, enemy.x, enemy.y - enemy.radius - 10);
+        console.log(`✓ Enemy ${enemy.type} defeated! +${reward} gold (total: ${game.gold})`);
         }
-
         break;  // một đạn chỉ trúng 1 enemy
       }
     }
@@ -791,16 +804,7 @@ gameLoop();
 // -----------------------------------------------------------
 // STATE CONSTANTS
 // -----------------------------------------------------------
-const STATE = {
-  MENU:       'MENU',
-  PLAYING:    'PLAYING',
-  WAVE_CLEAR: 'WAVE_CLEAR',
-  EDUCATION:  'EDUCATION',
-  POPUP:      'POPUP',
-  GAME_OVER:  'GAME_OVER',
-};
 
-let currentState = STATE.MENU;
 
 // Dữ liệu riêng cho từng state
 const stateData = {
@@ -1093,7 +1097,7 @@ function drawGameOver() {
 // RESET GAME — khởi động lại hoàn toàn
 // -----------------------------------------------------------
 function resetGame() {
-  game.gold       = 500;
+  game.gold       = 150;
   game.serverHP   = 100;
   game.wave       = 1;
   enemies         = [];

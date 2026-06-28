@@ -228,7 +228,7 @@ HELP_BTN: { x: 40, y: 60, r: 16 },
   _drawGuidePage0(ctx, bx, by, bw, bh) {
     const startY = by + 90;
     const col1 = bx + 30;
-    const col2 = bx + 360;
+    const col2 = bx + 390;
     const lineH = 28;
 
     // Mục tiêu
@@ -261,7 +261,7 @@ HELP_BTN: { x: 40, y: 60, r: 16 },
       ctx.fillText(`▸ ${key}`, col1, y);
       ctx.fillStyle = '#A8C8E8';
       ctx.font = "11px 'Courier New'";
-      ctx.fillText(val, col1 + 160, y);
+      ctx.fillText(val, col1 + 175, y);
     });
 
     // Kinh tế
@@ -272,8 +272,8 @@ HELP_BTN: { x: 40, y: 60, r: 16 },
     ctx.fillStyle = '#A8C8E8';
     ctx.font = "11px 'Courier New'";
     const tips = [
-      'Bắt đầu với 500 Gold',
-      'Tiêu diệt quái: +50 Gold',
+      'Bắt đầu với 150 Gold',
+      'Tiêu diệt quái: +8~50 Gold tùy loại quái',
       'Ưu tiên mua tower sớm',
       'Tower rẻ hơn chưa chắc tệ hơn!',
     ];

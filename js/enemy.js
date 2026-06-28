@@ -256,12 +256,12 @@ class Enemy {
 // -----------------------------------------------------------
 function createEnemy(type) {
   const STATS = {
-    malware:    { hp: 80,  speed: 60,  damage: 15 },
-    phishing:   { hp: 40,  speed: 120, damage: 10 },
-    ddos:       { hp: 200, speed: 30,  damage: 35 },
-    ransomware: { hp: 150, speed: 50,  damage: 25 },
-    apt:        { hp: 500, speed: 25,  damage: 50 },
-  };
+  malware:    { hp: 80,  speed: 42,  damage: 15 },
+  phishing:   { hp: 40,  speed: 85,  damage: 10 },
+  ddos:       { hp: 200, speed: 22,  damage: 35 },
+  ransomware: { hp: 150, speed: 35,  damage: 25 },
+  apt:        { hp: 500, speed: 18,  damage: 50 },
+};
 
   const s = STATS[type];
   if (!s) throw new Error(`[Enemy] Unknown type: "${type}"`);

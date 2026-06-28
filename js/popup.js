@@ -22,7 +22,7 @@ const POPUP_CONTENT = {
       'Đây là hình thức tấn công phổ biến nhất hiện nay.',
       'Awareness và đào tạo người dùng là vũ khí quan trọng nhất.',
     ],
-    law: 'Nghị định 85/2021/NĐ-CP yêu cầu bảo vệ thông tin cá nhân khỏi lừa đảo trực tuyến.',
+    law: 'Theo Luật An ninh mạng 2018 Điều 8, nghiêm cấm hành vi chiếm đoạt thông tin bằng thủ đoạn lừa đảo.',
     recommendations: 'Xác minh nguồn gốc email, không click link lạ, bật xác thực 2 yếu tố.',
     connection: 'Awareness tower phát hiện và làm chậm Phishing enemy trong game.',
   },
@@ -77,7 +77,7 @@ const POPUP_CONTENT = {
       'Yêu cầu đánh giá rủi ro, triển khai kiểm soát và cải tiến liên tục.',
       'Vòng PDCA: Plan → Do → Check → Act.',
     ],
-    law: 'ISO 27001 được công nhận toàn cầu, nhiều doanh nghiệp Việt Nam đang áp dụng.',
+    law: 'ISO 27001 được công nhận toàn cầu. Việt Nam đã ban hành TCVN ISO/IEC 27001:2023 tương đương, áp dụng cho mọi tổ chức.',
     recommendations: 'Triển khai ISMS theo ISO 27001, đánh giá rủi ro định kỳ.',
     connection: 'Hệ thống tower trong game ánh xạ với Annex A của ISO 27001.',
   },
@@ -110,7 +110,7 @@ class Popup {
 
   draw(ctx) {
     const boxW = 650;
-    const boxH = 430;
+    const boxH = 500;
     const bx = W / 2 - boxW / 2;
     const by = H / 2 - boxH / 2;
 
